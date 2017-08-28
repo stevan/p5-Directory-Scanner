@@ -1,5 +1,5 @@
 package Directory::Scanner::Stream::Filtered;
-# ABSTRACT: Recrusive streaming directory iterator 
+# ABSTRACT: Filtered streaming directory iterator 
 
 use strict;
 use warnings;

@@ -51,4 +51,27 @@ subtest '... twisted filtered stream test' => sub {
 	ok($stream->is_closed, '... the stream is closed');	
 };
 
+subtest '... no results filtered stream test' => sub {
+
+	my $stream = Directory::Scanner->for( $ROOT )
+					  			   ->filter( sub { not((shift)->is_dir) } )
+					  			   ->recurse
+					  			   ->stream;
+	isa_ok($stream, 'Directory::Scanner::Stream::Recursive');
+
+	ok(!$stream->is_done, '... the stream is not done');
+	ok(!$stream->is_closed, '... the stream is not closed');
+	ok(!defined($stream->head), '... nothing in the head of the stream');	
+
+	is(exception { $stream->next }, undef, '... called next on stream successfully');
+
+	ok($stream->is_done, '... the stream is done');
+	ok(!$stream->is_closed, '... but the stream is not closed');
+	ok(!defined($stream->head), '... nothing in the head of the stream');
+
+	is(exception { $stream->close }, undef, '... closed stream successfully');
+
+	ok($stream->is_closed, '... the stream is closed');	
+};
+
 done_testing;
