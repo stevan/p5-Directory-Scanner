@@ -15,7 +15,7 @@ my $ROOT = $FindBin::Bin.'/data/';
 
 subtest '... basic stream test' => sub {
 
-	my $stream = Directory::Scanner->new_stream( $ROOT );
+	my $stream = Directory::Scanner->for( $ROOT )->stream;
 	isa_ok($stream, 'Directory::Scanner::Stream');
 
 	ok(!$stream->is_done, '... the stream is not done');

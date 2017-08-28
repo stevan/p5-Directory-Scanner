@@ -63,7 +63,7 @@ sub next {
 	my $next;
 	while (1) {
 		undef $next; # clear any previous values, just cause ...
-		$self->log('Entering loop ... ') if DEBUG;
+		$self->_log('Entering loop ... ') if DEBUG;
 		
 		$next = $self->{stream}->next;
 
@@ -76,7 +76,7 @@ sub next {
 		# not pass
 		next unless $self->{filter}->( $next );
 
-		$self->log('Exiting loop ... ') if DEBUG;
+		$self->_log('Exiting loop ... ') if DEBUG;
 
 		# if we have gotten to this 
 		# point, we have a value and

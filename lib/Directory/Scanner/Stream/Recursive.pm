@@ -74,10 +74,10 @@ sub next {
 	my $next;
 	while (1) {
 		undef $next; # clear any previous values, just cause ...
-		$self->log('Entering loop ... ') if DEBUG;
+		$self->_log('Entering loop ... ') if DEBUG;
 
 		if ( my $current = $self->{_stack}->[-1] ) {
-			$self->log('Stream available in stack') if DEBUG;
+			$self->_log('Stream available in stack') if DEBUG;
 			if ( my $candidate = $current->next ) {
 				# if we have a directory, prepare
 				# to recurse into it the next time 
@@ -91,7 +91,7 @@ sub next {
 				last;
 			}
 			else {
-				$self->log('Current stream has been exhausted, moving to next') if DEBUG;
+				$self->_log('Current stream has been exhausted, moving to next') if DEBUG;
 
 				# something, something, ... check is_done on $current here ...
 
@@ -101,8 +101,8 @@ sub next {
 			}
 		}
 		else {
-			$self->log('No more streams available in stack') if DEBUG;
-			$self->log('Exiting loop ... DONE') if DEBUG;
+			$self->_log('No more streams available in stack') if DEBUG;
+			$self->_log('Exiting loop ... DONE') if DEBUG;
 
 			$self->{_head}    = undef;			
 			$self->{_is_done} = 1;
@@ -112,11 +112,6 @@ sub next {
 
 	return $self->{_head} = $next;
 }
-
-# it doesn't make sense to 
-# have a recursive be recursed
-# upon, so just return thyself
-sub recurse { $_[0] }
 
 1;
 

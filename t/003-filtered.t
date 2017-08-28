@@ -15,9 +15,10 @@ my $ROOT = $FindBin::Bin.'/data/';
 
 subtest '... basic filtered stream test' => sub {
 
-	my $stream = Directory::Scanner->new_stream( $ROOT )
+	my $stream = Directory::Scanner->for( $ROOT )
 								   ->recurse
-								   ->filter( sub { (shift)->is_dir } );
+								   ->filter( sub { (shift)->is_dir } )
+								   ->stream;
 	isa_ok($stream, 'Directory::Scanner::Stream::Filtered');
 
 	ok(!$stream->is_done, '... the stream is not done');

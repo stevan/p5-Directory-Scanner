@@ -15,9 +15,10 @@ my $ROOT = $FindBin::Bin.'/data/';
 
 subtest '... twisted filtered stream test' => sub {
 
-	my $stream = Directory::Scanner->new_stream( $ROOT )
+	my $stream = Directory::Scanner->for( $ROOT )
 					  			   ->filter( sub { (shift)->is_dir } )
-					  			   ->recurse;
+					  			   ->recurse
+					  			   ->stream;
 	isa_ok($stream, 'Directory::Scanner::Stream::Recursive');
 
 	ok(!$stream->is_done, '... the stream is not done');

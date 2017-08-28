@@ -92,41 +92,41 @@ sub next {
 	my $next;
 	while (1) {
 		undef $next; # clear any previous values, just cause ...
-		$self->log('Entering loop ... ') if DEBUG;
+		$self->_log('Entering loop ... ') if DEBUG;
 
-		$self->log('About to read directory ...') if DEBUG;
+		$self->_log('About to read directory ...') if DEBUG;
 		if ( my $name = readdir( $self->{_handle} ) ) {
 
-			$self->log('Read directory ...') if DEBUG;
+			$self->_log('Read directory ...') if DEBUG;
 			next unless defined $name;
 
-			$self->log('Got ('.$name.') from directory read ...') if DEBUG;
+			$self->_log('Got ('.$name.') from directory read ...') if DEBUG;
 			next if $name eq '.' || $name eq '..'; # skip these ...
 
 			$next = $self->{origin}->child( $name );		
 
 			# directory is not readable or has been removed, so skip it
 			if ( ! -r $next ) {
-				$self->log('Directory/File not readable ...') if DEBUG;
+				$self->_log('Directory/File not readable ...') if DEBUG;
 				next;
 			}
 			else {
-				$self->log('Value is good, ready to return it') if DEBUG;
+				$self->_log('Value is good, ready to return it') if DEBUG;
 				last;
 			}
 		}
 		else {
-			$self->log('Exiting loop ... DONE') if DEBUG;
+			$self->_log('Exiting loop ... DONE') if DEBUG;
 
 			# cleanup ...
 			$self->{_head}    = undef;
 			$self->{_is_done} = 1;
 			last;
 		}
-		$self->log('... looping') if DEBUG;
+		$self->_log('... looping') if DEBUG;
 	}
 
-	$self->log('Got next value('.$next.')') if DEBUG;
+	$self->_log('Got next value('.$next.')') if DEBUG;
 	return $self->{_head} = $next;
 }
 
