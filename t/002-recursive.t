@@ -8,18 +8,15 @@ use Test::More;
 use Test::Fatal;
 
 BEGIN {
-	use_ok('Directory::Stream');
-	use_ok('Directory::Stream::Recursive');
+	use_ok('Directory::Scanner');
 }
 
 my $ROOT = $FindBin::Bin.'/data/';
 
 subtest '... basic recursive stream test' => sub {
 
-	my $stream = Directory::Stream::Recursive->new(
-		Directory::Stream->new( $ROOT )
-	);
-	isa_ok($stream, 'Directory::Stream::Recursive');
+	my $stream = Directory::Scanner->new_stream( $ROOT )->recurse;
+	isa_ok($stream, 'Directory::Scanner::Stream::Recursive');
 
 	ok(!$stream->is_done, '... the stream is not done');
 	ok(!$stream->is_closed, '... the stream is not closed');

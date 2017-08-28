@@ -8,15 +8,15 @@ use Test::More;
 use Test::Fatal;
 
 BEGIN {
-	use_ok('Directory::Stream');
+	use_ok('Directory::Scanner');
 }
 
 my $ROOT = $FindBin::Bin.'/data/';
 
 subtest '... basic stream test' => sub {
 
-	my $stream = Directory::Stream->new( $ROOT );
-	isa_ok($stream, 'Directory::Stream');
+	my $stream = Directory::Scanner->new_stream( $ROOT );
+	isa_ok($stream, 'Directory::Scanner::Stream');
 
 	ok(!$stream->is_done, '... the stream is not done');
 	ok(!$stream->is_closed, '... the stream is not closed');

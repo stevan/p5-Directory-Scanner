@@ -1,4 +1,4 @@
-package Directory::Stream::Recursive;
+package Directory::Scanner::Stream::Recursive;
 # ABSTRACT: Recrusive streaming directory iterator 
 
 use strict;
@@ -8,19 +8,20 @@ use Carp         ();
 use Scalar::Util ();
 
 use UNIVERSAL::Object;
-use Directory::Stream::API::Stream;
+use Directory::Scanner::API::Stream;
 
 our $VERSION   = '0.01';
 our $AUTHORITY = 'cpan:STEVAN';
 
-use constant DEBUG => $ENV{DIR_STREAM_RECURSIVE_DEBUG} // 0;
+use constant DEBUG => $ENV{DIR_SCANNER_STREAM_RECURSIVE_DEBUG} // 0;
 
 ## ...
 
-our @ISA; BEGIN { @ISA = ('UNIVERSAL::Object', 'Directory::Stream::API::Stream') }
+our @ISA; BEGIN { @ISA = ('UNIVERSAL::Object', 'Directory::Scanner::API::Stream') }
 our %HAS; BEGIN {
 	%HAS = (
-		_stream    => sub {},
+		stream     => sub {},
+		# internal state ...
 		_head      => sub {},	
 		_stack     => sub { [] },
 		_is_done   => sub { 0 },
@@ -30,24 +31,20 @@ our %HAS; BEGIN {
 
 ## ...
 
-sub BUILDARGS { 
-	my $class  = shift;
-	my $stream = shift;
-
-	(Scalar::Util::blessed($stream) && $stream->DOES('Directory::Stream::API::Stream')) 
-		|| Carp::confess 'You must supply a directory stream';		
-
-	$class->next::method( _stream => $stream );
-}
-
 sub BUILD {
 	my ($self, $params) = @_;
-	push @{$self->{_stack}} => $self->{_stream};
+
+	my $stream = $self->{stream};
+
+	(Scalar::Util::blessed($stream) && $stream->DOES('Directory::Scanner::API::Stream')) 
+		|| Carp::confess 'You must supply a directory stream';	
+
+	push @{$self->{_stack}} => $stream;
 }
 
 sub clone {
 	my ($self, $dir) = @_;
-	return $self->new( $self->{_stream}->clone( $dir ) );
+	return $self->new( stream => $self->{stream}->clone( $dir ) );
 }
 
 ## accessor 
@@ -115,6 +112,11 @@ sub next {
 
 	return $self->{_head} = $next;
 }
+
+# it doesn't make sense to 
+# have a recursive be recursed
+# upon, so just return thyself
+sub recurse { $_[0] }
 
 1;
 

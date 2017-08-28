@@ -1,4 +1,4 @@
-package Directory::Stream::Filtered;
+package Directory::Scanner::Stream::Filtered;
 # ABSTRACT: Recrusive streaming directory iterator 
 
 use strict;
@@ -8,31 +8,31 @@ use Carp         ();
 use Scalar::Util ();
 
 use UNIVERSAL::Object;
-use Directory::Stream::API::Stream;
+use Directory::Scanner::API::Stream;
 
 our $VERSION   = '0.01';
 our $AUTHORITY = 'cpan:STEVAN';
 
-use constant DEBUG => $ENV{DIR_STREAM_FILTERED_DEBUG} // 0;
+use constant DEBUG => $ENV{DIR_SCANNER_STREAM_FILTERED_DEBUG} // 0;
 
 ## ...
 
-our @ISA; BEGIN { @ISA = ('UNIVERSAL::Object', 'Directory::Stream::API::Stream') }
+our @ISA; BEGIN { @ISA = ('UNIVERSAL::Object', 'Directory::Scanner::API::Stream') }
 our %HAS; BEGIN {
 	%HAS = (
-		_stream => sub {},
-		_filter => sub {},		
+		stream => sub {},
+		filter => sub {},		
 	)
 }
 
 ## ...
 
-sub BUILDARGS { 
-	my $class  = shift;
-	my $stream = shift;
-	my $filter = shift;
+sub BUILD { 
+	my $self   = $_[0];
+	my $stream = $self->{stream};
+	my $filter = $self->{filter};
 
-	(Scalar::Util::blessed($stream) && $stream->DOES('Directory::Stream::API::Stream')) 
+	(Scalar::Util::blessed($stream) && $stream->DOES('Directory::Scanner::API::Stream')) 
 		|| Carp::confess 'You must supply a directory stream';		
 
 	(defined $filter)
@@ -40,21 +40,22 @@ sub BUILDARGS {
 
 	(ref $filter eq 'CODE')
 		|| Carp::confess 'The filter supplied must be a CODE reference';		
-
-	$class->next::method( _stream => $stream, _filter => $filter );
 }
 
 sub clone {
 	my ($self, $dir) = @_;
-	return $self->new( $self->{_stream}->clone( $dir ), $self->{_filter} );
+	return $self->new( 
+		stream => $self->{stream}->clone( $dir ), 
+		filter => $self->{filter} 
+	);
 }
 
 ## delegate 
 
-sub head      { $_[0]->{_stream}->head      }
-sub is_done   { $_[0]->{_stream}->is_done   }
-sub is_closed { $_[0]->{_stream}->is_closed }
-sub close     { $_[0]->{_stream}->close     }
+sub head      { $_[0]->{stream}->head      }
+sub is_done   { $_[0]->{stream}->is_done   }
+sub is_closed { $_[0]->{stream}->is_closed }
+sub close     { $_[0]->{stream}->close     }
 
 sub next {
 	my $self = $_[0];
@@ -64,7 +65,7 @@ sub next {
 		undef $next; # clear any previous values, just cause ...
 		$self->log('Entering loop ... ') if DEBUG;
 		
-		$next = $self->{_stream}->next;
+		$next = $self->{stream}->next;
 
 		# this means the stream is likely 
 		# exhausted, so jump out of the loop
@@ -73,7 +74,7 @@ sub next {
 		# now try to filter the value
 		# and redo the loop if it does 
 		# not pass
-		next unless $self->{_filter}->( $next );
+		next unless $self->{filter}->( $next );
 
 		$self->log('Exiting loop ... ') if DEBUG;
 

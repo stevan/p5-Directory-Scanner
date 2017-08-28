@@ -1,4 +1,4 @@
-package Directory::Stream;
+package Directory::Scanner::Stream;
 # ABSTRACT: Streaming directory iterator 
 
 use strict;
@@ -9,19 +9,20 @@ use Scalar::Util ();
 use Path::Tiny   ();
 
 use UNIVERSAL::Object;
-use Directory::Stream::API::Stream;
+use Directory::Scanner::API::Stream;
 
 our $VERSION   = '0.01';
 our $AUTHORITY = 'cpan:STEVAN';
 
-use constant DEBUG => $ENV{DIR_STREAM_DEBUG} // 0;
+use constant DEBUG => $ENV{DIR_SCANNER_STREAM_DEBUG} // 0;
 
 ## ...
 
-our @ISA; BEGIN { @ISA = ('UNIVERSAL::Object', 'Directory::Stream::API::Stream') }
+our @ISA; BEGIN { @ISA = ('UNIVERSAL::Object', 'Directory::Scanner::API::Stream') }
 our %HAS; BEGIN {
 	%HAS = (
-		_origin    => sub {},
+		origin     => sub { die 'You must supply a `origin` directory path' },
+		# internal state ...
 		_head      => sub {},		
 		_handle    => sub {},
 		_is_done   => sub { 0 },
@@ -31,48 +32,45 @@ our %HAS; BEGIN {
 
 ## ...
 
-sub BUILDARGS { 
-	my $class = shift;
-	my $dir   = shift;
-
-	(defined $dir) 
-		|| Carp::confess 'You must supply a directory path';		
-
-	$dir = Path::Tiny::path( $dir ) 
-		unless Scalar::Util::blessed( $dir ) 
-			&& $dir->isa('Path::Tiny');
-
-	(-d $dir)
-		|| Carp::confess 'Supplied path value must be a directory ('.$dir.')';
-
-	(-r $dir) 
-		|| Carp::confess 'Supplied path value must be a readable directory ('.$dir.')';
-
-	(! -l $dir)
-		|| Carp::confess 'Supplied path value must not be a symlink ('.$dir.')';	
-
-	$class->next::method( _origin => $dir );
-}
-
 sub BUILD {
 	my ($self, $params) = @_;
 
+	my $dir = $self->{origin};
+
+	# upgrade this to a Path:Tiny
+	# object if needed 
+	$self->{origin} = $dir = Path::Tiny::path( $dir ) 
+		unless Scalar::Util::blessed( $dir ) 
+			&& $dir->isa('Path::Tiny');
+
+	# make sure the directory is 
+	# fit to be streamed
+	(-d $dir)
+		|| Carp::confess 'Supplied path value must be a directory ('.$dir.')';
+	(-r $dir) 
+		|| Carp::confess 'Supplied path value must be a readable directory ('.$dir.')';
+	(! -l $dir)
+		|| Carp::confess 'Supplied path value must not be a symlink ('.$dir.')';	
+
 	my $handle;
-	opendir( $handle, $self->{_origin} )
-		|| Carp::confess 'Unable to open handle for directory('.$self->{_origin}.') because: ' . $!;
+	opendir( $handle, $dir )
+		|| Carp::confess 'Unable to open handle for directory('.$dir.') because: ' . $!;
 
 	$self->{_handle} = $handle;
 }
 
 sub clone {
 	my ($self, $dir) = @_;
-	return $self->new( $dir );
+	return $self->new( origin => $dir );
 }
 
 ## accessor 
 
-sub head { $_[0]->{_head} }
+sub origin { $_[0]->{_origin} }
 
+## API::Stream ...
+
+sub head      { $_[0]->{_head}      }
 sub is_done   { $_[0]->{_is_done}   }
 sub is_closed { $_[0]->{_is_closed} }
 
@@ -105,7 +103,7 @@ sub next {
 			$self->log('Got ('.$name.') from directory read ...') if DEBUG;
 			next if $name eq '.' || $name eq '..'; # skip these ...
 
-			$next = $self->{_origin}->child( $name );		
+			$next = $self->{origin}->child( $name );		
 
 			# directory is not readable or has been removed, so skip it
 			if ( ! -r $next ) {

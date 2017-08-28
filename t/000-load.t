@@ -6,7 +6,7 @@ use warnings;
 use Test::More;
 
 BEGIN {
-	use_ok('Directory::Stream');
+	use_ok('Directory::Scanner');
 }
 
 done_testing;
