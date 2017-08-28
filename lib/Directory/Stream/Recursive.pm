@@ -7,6 +7,9 @@ use warnings;
 use Carp         ();
 use Scalar::Util ();
 
+use UNIVERSAL::Object;
+use Directory::Stream::API::Stream;
+
 our $VERSION   = '0.01';
 our $AUTHORITY = 'cpan:STEVAN';
 
@@ -14,30 +17,42 @@ use constant DEBUG => $ENV{DIR_STREAM_RECURSIVE_DEBUG} // 0;
 
 ## ...
 
-use parent 'Directory::Stream::API::Stream';
+our @ISA; BEGIN { @ISA = ('UNIVERSAL::Object', 'Directory::Stream::API::Stream') }
+our %HAS; BEGIN {
+	%HAS = (
+		_stream    => sub {},
+		_head      => sub {},	
+		_stack     => sub { [] },
+		_is_done   => sub { 0 },
+		_is_closed => sub { 0 },		
+	)
+}
 
 ## ...
 
-sub new {
+sub BUILDARGS { 
 	my $class  = shift;
 	my $stream = shift;
 
 	(Scalar::Util::blessed($stream) && $stream->DOES('Directory::Stream::API::Stream')) 
-		|| Carp::confess 'You must supply a directory stream';	
+		|| Carp::confess 'You must supply a directory stream';		
 
-	return bless {
-		_origin    => $stream->origin,
-		_head      => undef,	
-		_stack     => [ $stream ],
-		_is_done   => 0,
-		_is_closed => 0,		
-	} => ref $class || $class;
+	$class->next::method( _stream => $stream );
+}
+
+sub BUILD {
+	my ($self, $params) = @_;
+	push @{$self->{_stack}} => $self->{_stream};
+}
+
+sub clone {
+	my ($self, $dir) = @_;
+	return $self->new( $self->{_stream}->clone( $dir ) );
 }
 
 ## accessor 
 
-sub origin { $_[0]->{_origin} }
-sub head   { $_[0]->{_head}   }
+sub head { $_[0]->{_head} }
 
 sub is_done   { $_[0]->{_is_done}   }
 sub is_closed { $_[0]->{_is_closed} }
@@ -71,7 +86,7 @@ sub next {
 				# to recurse into it the next time 
 				# we are called, then ....
 				if ( $candidate->is_dir ) {
-					push @{$self->{_stack}} => $current->new( $candidate );
+					push @{$self->{_stack}} => $current->clone( $candidate );
 				}
 				
 				# return our successful candidate 

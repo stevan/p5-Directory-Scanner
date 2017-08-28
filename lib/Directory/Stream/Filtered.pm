@@ -7,6 +7,9 @@ use warnings;
 use Carp         ();
 use Scalar::Util ();
 
+use UNIVERSAL::Object;
+use Directory::Stream::API::Stream;
+
 our $VERSION   = '0.01';
 our $AUTHORITY = 'cpan:STEVAN';
 
@@ -14,11 +17,17 @@ use constant DEBUG => $ENV{DIR_STREAM_FILTERED_DEBUG} // 0;
 
 ## ...
 
-use parent 'Directory::Stream::API::Stream';
+our @ISA; BEGIN { @ISA = ('UNIVERSAL::Object', 'Directory::Stream::API::Stream') }
+our %HAS; BEGIN {
+	%HAS = (
+		_stream => sub {},
+		_filter => sub {},		
+	)
+}
 
 ## ...
 
-sub new {
+sub BUILDARGS { 
 	my $class  = shift;
 	my $stream = shift;
 	my $filter = shift;
@@ -32,15 +41,16 @@ sub new {
 	(ref $filter eq 'CODE')
 		|| Carp::confess 'The filter supplied must be a CODE reference';		
 
-	return bless {
-		_stream => $stream,
-		_filter => $filter,
-	} => ref $class || $class;
+	$class->next::method( _stream => $stream, _filter => $filter );
+}
+
+sub clone {
+	my ($self, $dir) = @_;
+	return $self->new( $self->{_stream}->clone( $dir ), $self->{_filter} );
 }
 
 ## delegate 
 
-sub origin    { $_[0]->{_stream}->origin    }
 sub head      { $_[0]->{_stream}->head      }
 sub is_done   { $_[0]->{_stream}->is_done   }
 sub is_closed { $_[0]->{_stream}->is_closed }

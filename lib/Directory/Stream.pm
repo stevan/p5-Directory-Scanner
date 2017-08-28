@@ -8,6 +8,9 @@ use Carp         ();
 use Scalar::Util ();
 use Path::Tiny   ();
 
+use UNIVERSAL::Object;
+use Directory::Stream::API::Stream;
+
 our $VERSION   = '0.01';
 our $AUTHORITY = 'cpan:STEVAN';
 
@@ -15,11 +18,20 @@ use constant DEBUG => $ENV{DIR_STREAM_DEBUG} // 0;
 
 ## ...
 
-use parent 'Directory::Stream::API::Stream';
+our @ISA; BEGIN { @ISA = ('UNIVERSAL::Object', 'Directory::Stream::API::Stream') }
+our %HAS; BEGIN {
+	%HAS = (
+		_origin    => sub {},
+		_head      => sub {},		
+		_handle    => sub {},
+		_is_done   => sub { 0 },
+		_is_closed => sub { 0 },		
+	)
+}
 
 ## ...
 
-sub new {
+sub BUILDARGS { 
 	my $class = shift;
 	my $dir   = shift;
 
@@ -37,25 +49,29 @@ sub new {
 		|| Carp::confess 'Supplied path value must be a readable directory ('.$dir.')';
 
 	(! -l $dir)
-		|| Carp::confess 'Supplied path value must not be a symlink ('.$dir.')';
+		|| Carp::confess 'Supplied path value must not be a symlink ('.$dir.')';	
+
+	$class->next::method( _origin => $dir );
+}
+
+sub BUILD {
+	my ($self, $params) = @_;
 
 	my $handle;
-	opendir( $handle, $dir )
-		|| Carp::confess 'Unable to open handle for directory('.$dir.') because: ' . $!;
+	opendir( $handle, $self->{_origin} )
+		|| Carp::confess 'Unable to open handle for directory('.$self->{_origin}.') because: ' . $!;
 
-	return bless {
-		_origin    => $dir,
-		_head      => undef,		
-		_handle    => $handle,
-		_is_done   => 0,
-		_is_closed => 0,
-	} => ref $class || $class;
+	$self->{_handle} = $handle;
+}
+
+sub clone {
+	my ($self, $dir) = @_;
+	return $self->new( $dir );
 }
 
 ## accessor 
 
-sub origin { $_[0]->{_origin} }
-sub head   { $_[0]->{_head}   }
+sub head { $_[0]->{_head} }
 
 sub is_done   { $_[0]->{_is_done}   }
 sub is_closed { $_[0]->{_is_closed} }
