@@ -6,6 +6,7 @@ use warnings;
 use Directory::Scanner::Stream;
 use Directory::Scanner::Stream::Recursive;
 use Directory::Scanner::Stream::Filtered;
+use Directory::Scanner::Stream::Application;
 
 sub for {
 	my (undef, $dir) = @_;
@@ -29,6 +30,14 @@ sub filter {
 	return $builder;
 }
 
+sub apply {
+	my ($builder, $f) = @_;
+
+	push @$builder => [ 'Directory::Scanner::Stream::Application', f => $f ];
+
+	return $builder;
+}
+
 sub stream {
 	my ($builder) = @_;
 
@@ -45,7 +54,6 @@ sub stream {
 	else {
 		Carp::confess 'Nothing to construct a stream on';
 	}
-	
 }
 
 1;
@@ -68,8 +76,17 @@ __END__
 					  ->stream;
 
 	Directory::Scanner->for( $dir )
-					  ->filter(sub { (shift)->is_dir })
+					  ->filter(sub { (shift)->basename =~ /^\./ })
 					  ->recurse
 					  ->stream;
 
+	Directory::Scanner->for( $dir )
+					  ->recurse
+					  ->filter(sub { (shift)->is_file })
+					  ->apply(sub { (shift)->chmod(0777) })
+					  ->stream;
+
+
 =cut
+
+
