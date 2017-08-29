@@ -64,26 +64,30 @@ __END__
 
 =head1 SYNOPSIS
 
+	# get all entries in a directory 
+	
 	Directory::Scanner->for( $dir )->stream;
 
+	# get all entries in a directory recursively
+	
 	Directory::Scanner->for( $dir )
 					  ->recurse
 					  ->stream;
 
+	# get all entries in a directory recusively 
+	# and filter out anything that is not a directory
+	
 	Directory::Scanner->for( $dir )
 					  ->recurse
 					  ->filter(sub { (shift)->is_dir })
 					  ->stream;
 
+	# get all entries in a directory, filter out 
+	# anything that is not a directory, then recurse
+
 	Directory::Scanner->for( $dir )
 					  ->filter(sub { (shift)->basename =~ /^\./ })
 					  ->recurse
-					  ->stream;
-
-	Directory::Scanner->for( $dir )
-					  ->recurse
-					  ->filter(sub { (shift)->is_file })
-					  ->apply(sub { (shift)->chmod(0777) })
 					  ->stream;
 
 
