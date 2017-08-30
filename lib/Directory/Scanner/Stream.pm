@@ -61,6 +61,7 @@ sub BUILD {
 
 sub clone {
 	my ($self, $dir) = @_;
+	$dir ||= $self->{origin};
 	return $self->new( origin => $dir );
 }
 
