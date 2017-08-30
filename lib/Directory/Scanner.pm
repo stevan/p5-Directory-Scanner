@@ -100,7 +100,7 @@ __END__
 					  ->stream;
 
 	# get all entries in a directory, filter out 
-	# anything that is not a directory, then recurse
+	# anything that is a . directory, then recurse
 
 	Directory::Scanner->for( $dir )
 					  ->filter(sub { (shift)->basename =~ /^\./ })
