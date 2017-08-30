@@ -1,4 +1,4 @@
-#!/usr/bin/env perl 
+#!/usr/bin/env perl
 
 use strict;
 use warnings;
@@ -23,7 +23,7 @@ subtest '... basic filtered stream test' => sub {
 
 	ok(!$stream->is_done, '... the stream is not done');
 	ok(!$stream->is_closed, '... the stream is not closed');
-	ok(!defined($stream->head), '... nothing in the head of the stream');	
+	ok(!defined($stream->head), '... nothing in the head of the stream');
 
 	my @all;
 	while ( my $i = $stream->next ) {
@@ -32,13 +32,13 @@ subtest '... basic filtered stream test' => sub {
 	}
 
 	is_deeply(
-		[ sort @all ], 
-		[qw[ 
-			lib 
+		[ sort @all ],
+		[qw[
+			lib
 			lib/Foo
 			lib/Foo/Bar
-			t 
-		]], 
+			t
+		]],
 		'... got the list of directories'
 	);
 
@@ -48,7 +48,7 @@ subtest '... basic filtered stream test' => sub {
 
 	is(exception { $stream->close }, undef, '... closed stream successfully');
 
-	ok($stream->is_closed, '... the stream is closed');	
+	ok($stream->is_closed, '... the stream is closed');
 };
 
 subtest '... basic filtered stream test' => sub {
@@ -61,18 +61,18 @@ subtest '... basic filtered stream test' => sub {
 
 	ok(!$stream->is_done, '... the stream is not done');
 	ok(!$stream->is_closed, '... the stream is not closed');
-	ok(!defined($stream->head), '... nothing in the head of the stream');	
+	ok(!defined($stream->head), '... nothing in the head of the stream');
 
 	my @all = map $_->relative( $ROOT ), $stream->flatten;
 
 	is_deeply(
-		[ sort @all ], 
-		[qw[ 
-			lib 
+		[ sort @all ],
+		[qw[
+			lib
 			lib/Foo
 			lib/Foo/Bar
-			t 
-		]], 
+			t
+		]],
 		'... got the list of directories'
 	);
 
@@ -82,7 +82,7 @@ subtest '... basic filtered stream test' => sub {
 
 	is(exception { $stream->close }, undef, '... closed stream successfully');
 
-	ok($stream->is_closed, '... the stream is closed');	
+	ok($stream->is_closed, '... the stream is closed');
 };
 
 done_testing;
