@@ -67,6 +67,11 @@ sub close {
 sub next {
 	my $self = $_[0];
 
+	return if $self->{_is_done};
+
+	Carp::confess 'Cannot call `next` on a closed stream'
+		if $self->{_is_closed};	
+
 	my $next;
 	while (1) {
 		undef $next; # clear any previous values, just cause ...
