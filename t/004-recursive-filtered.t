@@ -1,4 +1,4 @@
-#!/usr/bin/env perl 
+#!/usr/bin/env perl
 
 use strict;
 use warnings;
@@ -16,14 +16,14 @@ my $ROOT = $FindBin::Bin.'/data/';
 subtest '... twisted filtered stream test' => sub {
 
 	my $stream = Directory::Scanner->for( $ROOT )
-					  			   ->filter( sub { (shift)->is_dir } )
+					  			   ->ignore( sub { (shift)->is_file } )
 					  			   ->recurse
 					  			   ->stream;
 	isa_ok($stream, 'Directory::Scanner::Stream::Recursive');
 
 	ok(!$stream->is_done, '... the stream is not done');
 	ok(!$stream->is_closed, '... the stream is not closed');
-	ok(!defined($stream->head), '... nothing in the head of the stream');	
+	ok(!defined($stream->head), '... nothing in the head of the stream');
 
 	my @all;
 	while ( my $i = $stream->next ) {
@@ -32,13 +32,13 @@ subtest '... twisted filtered stream test' => sub {
 	}
 
 	is_deeply(
-		[ sort @all ], 
-		[qw[ 
-			lib 
+		[ sort @all ],
+		[qw[
+			lib
 			lib/Foo
 			lib/Foo/Bar
-			t 
-		]], 
+			t
+		]],
 		'... got the list of directories'
 	);
 
@@ -48,20 +48,20 @@ subtest '... twisted filtered stream test' => sub {
 
 	is(exception { $stream->close }, undef, '... closed stream successfully');
 
-	ok($stream->is_closed, '... the stream is closed');	
+	ok($stream->is_closed, '... the stream is closed');
 };
 
 subtest '... no results filtered stream test' => sub {
 
 	my $stream = Directory::Scanner->for( $ROOT )
-					  			   ->filter( sub { (shift)->is_file } )
+					  			   ->ignore( sub { (shift)->is_dir } )
 					  			   ->recurse
 					  			   ->stream;
 	isa_ok($stream, 'Directory::Scanner::Stream::Recursive');
 
 	ok(!$stream->is_done, '... the stream is not done');
 	ok(!$stream->is_closed, '... the stream is not closed');
-	ok(!defined($stream->head), '... nothing in the head of the stream');	
+	ok(!defined($stream->head), '... nothing in the head of the stream');
 
 	is(exception { $stream->next }, undef, '... called next on stream successfully');
 
@@ -71,31 +71,31 @@ subtest '... no results filtered stream test' => sub {
 
 	is(exception { $stream->close }, undef, '... closed stream successfully');
 
-	ok($stream->is_closed, '... the stream is closed');	
+	ok($stream->is_closed, '... the stream is closed');
 };
 
 subtest '... twisted filtered stream test with flatten' => sub {
 
 	my $stream = Directory::Scanner->for( $ROOT )
-					  			   ->filter( sub { (shift)->is_dir } )
+					  			   ->ignore( sub { (shift)->is_file } )
 					  			   ->recurse
 					  			   ->stream;
 	isa_ok($stream, 'Directory::Scanner::Stream::Recursive');
 
 	ok(!$stream->is_done, '... the stream is not done');
 	ok(!$stream->is_closed, '... the stream is not closed');
-	ok(!defined($stream->head), '... nothing in the head of the stream');	
+	ok(!defined($stream->head), '... nothing in the head of the stream');
 
 	my @all = map $_->relative( $ROOT ), $stream->flatten;
 
 	is_deeply(
-		[ sort @all ], 
-		[qw[ 
-			lib 
+		[ sort @all ],
+		[qw[
+			lib
 			lib/Foo
 			lib/Foo/Bar
-			t 
-		]], 
+			t
+		]],
 		'... got the list of directories'
 	);
 
@@ -105,7 +105,7 @@ subtest '... twisted filtered stream test with flatten' => sub {
 
 	is(exception { $stream->close }, undef, '... closed stream successfully');
 
-	ok($stream->is_closed, '... the stream is closed');	
+	ok($stream->is_closed, '... the stream is closed');
 };
 
 done_testing;

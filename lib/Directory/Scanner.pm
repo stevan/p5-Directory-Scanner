@@ -19,7 +19,7 @@ use Directory::Scanner::Stream::Application;
 our $VERSION   = '0.01';
 our $AUTHORITY = 'cpan:STEVAN';
 
-## static builder constructors 
+## static builder constructors
 
 sub for {
 	my (undef, $dir) = @_;
@@ -35,12 +35,18 @@ sub concat {
 	return Directory::Scanner::Stream::Concat->new( streams => [ @streams ] );
 }
 
-## builder instance methods 
+## builder instance methods
 
 sub recurse {
 	my ($builder) = @_;
 	push @$builder => [ 'Directory::Scanner::Stream::Recursive' ];
 	return $builder;
+}
+
+sub ignore {
+    my ($builder, $filter) = @_;
+    push @$builder => [ 'Directory::Scanner::Stream::Filtered', filter => sub { !$filter->( @_ ) } ];
+    return $builder;
 }
 
 sub filter {
@@ -81,26 +87,38 @@ __END__
 
 =head1 SYNOPSIS
 
-	# get all entries in a directory 
-	
+	# get all entries in a directory
+
 	Directory::Scanner->for( $dir )->stream;
 
 	# get all entries in a directory recursively
-	
+
 	Directory::Scanner->for( $dir )
 					  ->recurse
 					  ->stream;
 
-	# get all entries in a directory recusively 
+	# get all entries in a directory recusively
 	# and filter out anything that is not a directory
-	
+
+    # NOTE:
+    # A filter after a recurse will
+    # iterate over every file in the
+    # entire tree.
+
 	Directory::Scanner->for( $dir )
 					  ->recurse
 					  ->filter(sub { (shift)->is_dir })
 					  ->stream;
 
-	# get all entries in a directory, filter out 
+	# get all entries in a directory, filter out
 	# anything that is a . directory, then recurse
+
+    # NOTE:
+    # A filter before a recurse will
+    # be used to descend each level of
+    # the tree, such that it guards
+    # which directories are recursed
+    # into and which that are not.
 
 	Directory::Scanner->for( $dir )
 					  ->filter(sub { (shift)->basename =~ /^\./ })
