@@ -49,8 +49,6 @@ sub BUILD {
 		|| Carp::confess 'Supplied path value must be a directory ('.$dir.')';
 	(-r $dir) 
 		|| Carp::confess 'Supplied path value must be a readable directory ('.$dir.')';
-	(! -l $dir)
-		|| Carp::confess 'Supplied path value must not be a symlink ('.$dir.')';	
 
 	my $handle;
 	opendir( $handle, $dir )
