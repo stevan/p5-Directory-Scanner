@@ -1,40 +1,57 @@
 package Directory::Scanner;
+# ABSTRACT: Streaming directory scanner
 
 use strict;
 use warnings;
 
+use Carp         ();
+use Scalar::Util ();
+
+use Directory::Scanner::API::Stream;
+
 use Directory::Scanner::Stream;
+use Directory::Scanner::Stream::Concat;
+
 use Directory::Scanner::Stream::Recursive;
 use Directory::Scanner::Stream::Filtered;
 use Directory::Scanner::Stream::Application;
 
+our $VERSION   = '0.01';
+our $AUTHORITY = 'cpan:STEVAN';
+
+## static builder constructors 
+
 sub for {
 	my (undef, $dir) = @_;
-
 	return bless [ $dir ] => __PACKAGE__;
 }
 
+sub concat {
+	my (undef, @streams) = @_;
+
+	Carp::confess 'You provide at least two streams to concat'
+		if scalar @streams < 2;
+
+	return Directory::Scanner::Stream::Concat->new( streams => [ @streams ] );
+}
+
+## builder instance methods 
+
 sub recurse {
 	my ($builder) = @_;
-
 	push @$builder => [ 'Directory::Scanner::Stream::Recursive' ];
-
 	return $builder;
 }
 
 sub filter {
 	my ($builder, $filter) = @_;
-
 	push @$builder => [ 'Directory::Scanner::Stream::Filtered', filter => $filter ];
-
 	return $builder;
 }
 
 sub apply {
 	my ($builder, $f) = @_;
-
 	push @$builder => [ 'Directory::Scanner::Stream::Application', f => $f ];
-
 	return $builder;
 }
 
