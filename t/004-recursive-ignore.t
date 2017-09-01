@@ -16,7 +16,7 @@ my $ROOT = $FindBin::Bin.'/data/';
 subtest '... twisted filtered stream test' => sub {
 
 	my $stream = Directory::Scanner->for( $ROOT )
-					  			   ->ignore( sub { (shift)->is_file } )
+					  			   ->ignore( sub { $_->is_file } )
 					  			   ->recurse
 					  			   ->stream;
 	isa_ok($stream, 'Directory::Scanner::Stream::Recursive');
@@ -54,7 +54,7 @@ subtest '... twisted filtered stream test' => sub {
 subtest '... no results filtered stream test' => sub {
 
 	my $stream = Directory::Scanner->for( $ROOT )
-					  			   ->ignore( sub { (shift)->is_dir } )
+					  			   ->ignore( sub { $_->is_dir } )
 					  			   ->recurse
 					  			   ->stream;
 	isa_ok($stream, 'Directory::Scanner::Stream::Recursive');
@@ -77,7 +77,7 @@ subtest '... no results filtered stream test' => sub {
 subtest '... twisted filtered stream test with flatten' => sub {
 
 	my $stream = Directory::Scanner->for( $ROOT )
-					  			   ->ignore( sub { (shift)->is_file } )
+					  			   ->ignore( sub { $_->is_file } )
 					  			   ->recurse
 					  			   ->stream;
 	isa_ok($stream, 'Directory::Scanner::Stream::Recursive');

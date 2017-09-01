@@ -13,7 +13,8 @@ use Directory::Scanner::Stream;
 use Directory::Scanner::Stream::Concat;
 
 use Directory::Scanner::Stream::Recursive;
-use Directory::Scanner::Stream::Filtered;
+use Directory::Scanner::Stream::Matching;
+use Directory::Scanner::Stream::Ignoring;
 use Directory::Scanner::Stream::Application;
 
 our $VERSION   = '0.01';
@@ -46,16 +47,14 @@ sub recurse {
 
 sub ignore {
     my ($builder, $filter) = @_;
-    # XXX - make this a module, not a hack-up of Filtered
     # XXX - should this support using at .gitignore files?
-    push @$builder => [ 'Directory::Scanner::Stream::Filtered', filter => sub { !$filter->( @_ ) } ];
+    push @$builder => [ 'Directory::Scanner::Stream::Ignoring', filter => $filter ];
     return $builder;
 }
 
-# XXX - consider renaming filter to match, it is more appropriate ...
-sub filter {
-	my ($builder, $filter) = @_;
-	push @$builder => [ 'Directory::Scanner::Stream::Filtered', filter => $filter ];
+sub match {
+	my ($builder, $predicate) = @_;
+	push @$builder => [ 'Directory::Scanner::Stream::Matching', predicate => $predicate ];
 	return $builder;
 }
 
@@ -108,13 +107,13 @@ __END__
 
 	Directory::Scanner->for( $dir )
 					  ->recurse
-					  ->filter(sub { (shift)->is_dir })
+					  ->match(sub { $_->is_dir })
 					  ->stream;
 
 	# ignore anything that is a . directory, then recurse
 
 	Directory::Scanner->for( $dir )
-					  ->ignore(sub { (shift)->basename =~ /^\./ })
+					  ->ignore(sub { $_->basename =~ /^\./ })
 					  ->recurse
 					  ->stream;
 
