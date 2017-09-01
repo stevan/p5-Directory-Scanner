@@ -16,7 +16,7 @@ my $ROOT = $FindBin::Bin.'/data/';
 subtest '... twisted filtered stream test' => sub {
 
 	my @c;
-	my $c = sub { push @c => $_[0]->relative( $ROOT ) };
+	my $c = sub { push @c => $_->relative( $ROOT ) };
 
 	my $stream = Directory::Scanner->for( $ROOT )
 					  			   ->recurse
@@ -61,7 +61,7 @@ subtest '... twisted filtered stream test' => sub {
 subtest '... twisted filtered stream test with flatten' => sub {
 
 	my @c;
-	my $c = sub { push @c => $_[0]->relative( $ROOT ) };
+	my $c = sub { push @c => $_->relative( $ROOT ) };
 
 	my $stream = Directory::Scanner->for( $ROOT )
 					  			   ->recurse

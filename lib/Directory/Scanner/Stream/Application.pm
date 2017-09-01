@@ -1,5 +1,5 @@
 package Directory::Scanner::Stream::Application;
-# ABSTRACT: Apply function to streaming directory iterator 
+# ABSTRACT: Apply function to streaming directory iterator
 
 use strict;
 use warnings;
@@ -21,36 +21,36 @@ our @ISA; BEGIN { @ISA = ('UNIVERSAL::Object', 'Directory::Scanner::API::Stream'
 our %HAS; BEGIN {
 	%HAS = (
 		stream => sub {},
-		f      => sub {},		
+		f      => sub {},
 	)
 }
 
 ## ...
 
-sub BUILD { 
+sub BUILD {
 	my $self   = $_[0];
 	my $stream = $self->{stream};
 	my $f      = $self->{f};
 
-	(Scalar::Util::blessed($stream) && $stream->DOES('Directory::Scanner::API::Stream')) 
-		|| Carp::confess 'You must supply a directory stream';		
+	(Scalar::Util::blessed($stream) && $stream->DOES('Directory::Scanner::API::Stream'))
+		|| Carp::confess 'You must supply a directory stream';
 
 	(defined $f)
 		|| Carp::confess 'You must supply a `f` value';
 
 	(ref $f eq 'CODE')
-		|| Carp::confess 'The `f` value supplied must be a CODE reference';		
+		|| Carp::confess 'The `f` value supplied must be a CODE reference';
 }
 
 sub clone {
 	my ($self, $dir) = @_;
-	return $self->new( 
-		stream => $self->{stream}->clone( $dir ), 
-		f      => $self->{f} 
+	return $self->new(
+		stream => $self->{stream}->clone( $dir ),
+		f      => $self->{f}
 	);
 }
 
-## delegate 
+## delegate
 
 sub head      { $_[0]->{stream}->head      }
 sub is_done   { $_[0]->{stream}->is_done   }
@@ -64,21 +64,22 @@ sub next {
 	while (1) {
 		undef $next; # clear any previous values, just cause ...
 		$self->_log('Entering loop ... ') if DEBUG;
-		
+
 		$next = $self->{stream}->next;
 
-		# this means the stream is likely 
+		# this means the stream is likely
 		# exhausted, so jump out of the loop
 		last unless defined $next;
 
-		# apply the function ... 
+		# apply the function ...
+        local $_ = $next;
 		$self->{f}->( $next );
 
 		$self->_log('Exiting loop ... ') if DEBUG;
 
-		# if we have gotten to this 
+		# if we have gotten to this
 		# point, we have a value and
-		# want to return it 
+		# want to return it
 		last;
 	}
 

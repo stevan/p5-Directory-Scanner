@@ -74,7 +74,6 @@ sub next {
         # now try to filter the value
         # and redo the loop if it does
         # not pass
-
         local $_ = $next;
         next if $self->{filter}->( $next );
 
