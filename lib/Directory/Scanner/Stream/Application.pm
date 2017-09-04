@@ -13,15 +13,15 @@ use Directory::Scanner::API::Stream;
 our $VERSION   = '0.01';
 our $AUTHORITY = 'cpan:STEVAN';
 
-use constant DEBUG => $ENV{DIR_SCANNER_STREAM_FILTERED_DEBUG} // 0;
+use constant DEBUG => $ENV{DIR_SCANNER_STREAM_APPLICATION_DEBUG} // 0;
 
 ## ...
 
 our @ISA; BEGIN { @ISA = ('UNIVERSAL::Object', 'Directory::Scanner::API::Stream') }
 our %HAS; BEGIN {
 	%HAS = (
-		stream => sub {},
-		f      => sub {},
+		stream   => sub {},
+		function => sub {},
 	)
 }
 
@@ -30,23 +30,23 @@ our %HAS; BEGIN {
 sub BUILD {
 	my $self   = $_[0];
 	my $stream = $self->{stream};
-	my $f      = $self->{f};
+	my $f      = $self->{function};
 
 	(Scalar::Util::blessed($stream) && $stream->DOES('Directory::Scanner::API::Stream'))
 		|| Carp::confess 'You must supply a directory stream';
 
 	(defined $f)
-		|| Carp::confess 'You must supply a `f` value';
+		|| Carp::confess 'You must supply a `function` value';
 
 	(ref $f eq 'CODE')
-		|| Carp::confess 'The `f` value supplied must be a CODE reference';
+		|| Carp::confess 'The `function` value supplied must be a CODE reference';
 }
 
 sub clone {
 	my ($self, $dir) = @_;
 	return $self->new(
-		stream => $self->{stream}->clone( $dir ),
-		f      => $self->{f}
+		stream   => $self->{stream}->clone( $dir ),
+		function => $self->{function}
 	);
 }
 
@@ -59,30 +59,16 @@ sub close     { $_[0]->{stream}->close     }
 
 sub next {
 	my $self = $_[0];
+	my $next = $self->{stream}->next;
 
-	my $next;
-	while (1) {
-		undef $next; # clear any previous values, just cause ...
-		$self->_log('Entering loop ... ') if DEBUG;
+	# this means the stream is likely exhausted
+	return unless defined $next;
 
-		$next = $self->{stream}->next;
+	# apply the function ...
+    local $_ = $next;
+	$self->{function}->( $next );
 
-		# this means the stream is likely
-		# exhausted, so jump out of the loop
-		last unless defined $next;
-
-		# apply the function ...
-        local $_ = $next;
-		$self->{f}->( $next );
-
-		$self->_log('Exiting loop ... ') if DEBUG;
-
-		# if we have gotten to this
-		# point, we have a value and
-		# want to return it
-		last;
-	}
-
+	# return the next value 
 	return $next;
 }
 

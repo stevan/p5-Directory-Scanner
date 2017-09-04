@@ -38,7 +38,6 @@ sub concat {
 
 ## builder instance methods
 
-# XXX - I kind of would like to get rid of this, you'll always do it, I think.
 sub recurse {
 	my ($builder) = @_;
 	push @$builder => [ 'Directory::Scanner::Stream::Recursive' ];
@@ -59,8 +58,10 @@ sub match {
 }
 
 sub apply {
-	my ($builder, $f) = @_;
-	push @$builder => [ 'Directory::Scanner::Stream::Application', f => $f ];
+	my ($builder, $function) = @_;
+	push @$builder => [ 'Directory::Scanner::Stream::Application', function => $function ];
+	return $builder;
+}
 	return $builder;
 }
 
