@@ -16,6 +16,7 @@ use Directory::Scanner::Stream::Recursive;
 use Directory::Scanner::Stream::Matching;
 use Directory::Scanner::Stream::Ignoring;
 use Directory::Scanner::Stream::Application;
+use Directory::Scanner::Stream::Transformer;
 
 our $VERSION   = '0.01';
 our $AUTHORITY = 'cpan:STEVAN';
@@ -62,6 +63,10 @@ sub apply {
 	push @$builder => [ 'Directory::Scanner::Stream::Application', function => $function ];
 	return $builder;
 }
+
+sub transform {
+	my ($builder, $transformer) = @_;
+	push @$builder => [ 'Directory::Scanner::Stream::Transformer', transformer => $transformer ];
 	return $builder;
 }
 
