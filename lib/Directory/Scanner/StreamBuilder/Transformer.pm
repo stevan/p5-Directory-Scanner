@@ -1,4 +1,4 @@
-package Directory::Scanner::Stream::Transformer;
+package Directory::Scanner::StreamBuilder::Transformer;
 # ABSTRACT: Fmap a streaming directory iterator
 
 use strict;

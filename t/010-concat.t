@@ -19,7 +19,7 @@ subtest '... basic recursive stream test' => sub {
 		Directory::Scanner->for( $ROOT.'lib/Foo' )->recurse->stream,
 		Directory::Scanner->for( $ROOT.'t/'      )->stream
 	);
-	isa_ok($stream, 'Directory::Scanner::Stream::Concat');
+	isa_ok($stream, 'Directory::Scanner::StreamBuilder::Concat');
 
 	ok(!$stream->is_done, '... the stream is not done');
 	ok(!$stream->is_closed, '... the stream is not closed');

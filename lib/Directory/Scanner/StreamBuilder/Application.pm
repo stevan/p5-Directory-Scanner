@@ -1,4 +1,4 @@
-package Directory::Scanner::Stream::Application;
+package Directory::Scanner::StreamBuilder::Application;
 # ABSTRACT: Apply function to streaming directory iterator
 
 use strict;

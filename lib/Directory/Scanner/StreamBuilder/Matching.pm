@@ -1,4 +1,4 @@
-package Directory::Scanner::Stream::Matching;
+package Directory::Scanner::StreamBuilder::Matching;
 # ABSTRACT: Filtered streaming directory iterator
 
 use strict;

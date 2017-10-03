@@ -10,13 +10,13 @@ use Scalar::Util ();
 use Directory::Scanner::API::Stream;
 
 use Directory::Scanner::Stream;
-use Directory::Scanner::Stream::Concat;
 
-use Directory::Scanner::Stream::Recursive;
-use Directory::Scanner::Stream::Matching;
-use Directory::Scanner::Stream::Ignoring;
-use Directory::Scanner::Stream::Application;
-use Directory::Scanner::Stream::Transformer;
+use Directory::Scanner::StreamBuilder::Concat;
+use Directory::Scanner::StreamBuilder::Recursive;
+use Directory::Scanner::StreamBuilder::Matching;
+use Directory::Scanner::StreamBuilder::Ignoring;
+use Directory::Scanner::StreamBuilder::Application;
+use Directory::Scanner::StreamBuilder::Transformer;
 
 our $VERSION   = '0.01';
 our $AUTHORITY = 'cpan:STEVAN';
@@ -34,39 +34,39 @@ sub concat {
 	Carp::confess 'You provide at least two streams to concat'
 		if scalar @streams < 2;
 
-	return Directory::Scanner::Stream::Concat->new( streams => [ @streams ] );
+	return Directory::Scanner::StreamBuilder::Concat->new( streams => [ @streams ] );
 }
 
 ## builder instance methods
 
 sub recurse {
 	my ($builder) = @_;
-	push @$builder => [ 'Directory::Scanner::Stream::Recursive' ];
+	push @$builder => [ 'Directory::Scanner::StreamBuilder::Recursive' ];
 	return $builder;
 }
 
 sub ignore {
     my ($builder, $filter) = @_;
     # XXX - should this support using at .gitignore files?
-    push @$builder => [ 'Directory::Scanner::Stream::Ignoring', filter => $filter ];
+    push @$builder => [ 'Directory::Scanner::StreamBuilder::Ignoring', filter => $filter ];
     return $builder;
 }
 
 sub match {
 	my ($builder, $predicate) = @_;
-	push @$builder => [ 'Directory::Scanner::Stream::Matching', predicate => $predicate ];
+	push @$builder => [ 'Directory::Scanner::StreamBuilder::Matching', predicate => $predicate ];
 	return $builder;
 }
 
 sub apply {
 	my ($builder, $function) = @_;
-	push @$builder => [ 'Directory::Scanner::Stream::Application', function => $function ];
+	push @$builder => [ 'Directory::Scanner::StreamBuilder::Application', function => $function ];
 	return $builder;
 }
 
 sub transform {
 	my ($builder, $transformer) = @_;
-	push @$builder => [ 'Directory::Scanner::Stream::Transformer', transformer => $transformer ];
+	push @$builder => [ 'Directory::Scanner::StreamBuilder::Transformer', transformer => $transformer ];
 	return $builder;
 }
 

@@ -1,4 +1,4 @@
-package Directory::Scanner::Stream::Ignoring;
+package Directory::Scanner::StreamBuilder::Ignoring;
 # ABSTRACT: Ignoring files in the streaming directory iterator
 
 use strict;

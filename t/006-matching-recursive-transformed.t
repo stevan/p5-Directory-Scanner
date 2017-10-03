@@ -20,7 +20,7 @@ subtest '... twisted filtered stream test' => sub {
 					  			   ->match(sub { $_->is_file })
 					  			   ->transform(sub { $_->relative( $ROOT ) })
 					  	           ->stream;
-	isa_ok($stream, 'Directory::Scanner::Stream::Transformer');
+	isa_ok($stream, 'Directory::Scanner::StreamBuilder::Transformer');
 
 	ok(!$stream->is_done, '... the stream is not done');
 	ok(!$stream->is_closed, '... the stream is not closed');
@@ -60,7 +60,7 @@ subtest '... twisted filtered stream test with flatten' => sub {
 					  			   ->match(sub { $_->is_file })
 					  			   ->transform(sub { $_->relative( $ROOT ) })
 					  	           ->stream;
-	isa_ok($stream, 'Directory::Scanner::Stream::Transformer');
+	isa_ok($stream, 'Directory::Scanner::StreamBuilder::Transformer');
 
 	ok(!$stream->is_done, '... the stream is not done');
 	ok(!$stream->is_closed, '... the stream is not closed');

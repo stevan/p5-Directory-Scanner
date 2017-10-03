@@ -1,4 +1,4 @@
-package Directory::Scanner::Stream::Recursive;
+package Directory::Scanner::StreamBuilder::Recursive;
 # ABSTRACT: Recrusive streaming directory iterator 
 
 use strict;
