@@ -10,7 +10,7 @@ use Scalar::Util ();
 use UNIVERSAL::Object;
 use Directory::Scanner::API::Stream;
 
-our $VERSION   = '0.01';
+our $VERSION   = '0.02';
 our $AUTHORITY = 'cpan:STEVAN';
 
 use constant DEBUG => $ENV{DIR_SCANNER_STREAM_MATCHING_DEBUG} // 0;
@@ -93,5 +93,14 @@ sub next {
 __END__
 
 =pod
+
+=head1 DESCRIPTION
+
+This is provides a stream that will retain any item for which the
+given a C<predicate> CODE ref returns true.
+
+=head1 METHODS
+
+This object conforms to the C<Directory::Scanner::API::Stream> API.
 
 =cut

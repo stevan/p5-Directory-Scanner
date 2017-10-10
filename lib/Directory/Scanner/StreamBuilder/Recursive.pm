@@ -1,5 +1,5 @@
 package Directory::Scanner::StreamBuilder::Recursive;
-# ABSTRACT: Recrusive streaming directory iterator 
+# ABSTRACT: Recrusive streaming directory iterator
 
 use strict;
 use warnings;
@@ -10,7 +10,7 @@ use Scalar::Util ();
 use UNIVERSAL::Object;
 use Directory::Scanner::API::Stream;
 
-our $VERSION   = '0.01';
+our $VERSION   = '0.02';
 our $AUTHORITY = 'cpan:STEVAN';
 
 use constant DEBUG => $ENV{DIR_SCANNER_STREAM_RECURSIVE_DEBUG} // 0;
@@ -22,10 +22,10 @@ our %HAS; BEGIN {
 	%HAS = (
 		stream     => sub {},
 		# internal state ...
-		_head      => sub {},	
+		_head      => sub {},
 		_stack     => sub { [] },
 		_is_done   => sub { 0 },
-		_is_closed => sub { 0 },		
+		_is_closed => sub { 0 },
 	)
 }
 
@@ -36,8 +36,8 @@ sub BUILD {
 
 	my $stream = $self->{stream};
 
-	(Scalar::Util::blessed($stream) && $stream->DOES('Directory::Scanner::API::Stream')) 
-		|| Carp::confess 'You must supply a directory stream';	
+	(Scalar::Util::blessed($stream) && $stream->DOES('Directory::Scanner::API::Stream'))
+		|| Carp::confess 'You must supply a directory stream';
 
 	push @{$self->{_stack}} => $stream;
 }
@@ -47,7 +47,7 @@ sub clone {
 	return $self->new( stream => $self->{stream}->clone( $dir ) );
 }
 
-## accessor 
+## accessor
 
 sub head { $_[0]->{_head} }
 
@@ -80,13 +80,13 @@ sub next {
 			$self->_log('Stream available in stack') if DEBUG;
 			if ( my $candidate = $current->next ) {
 				# if we have a directory, prepare
-				# to recurse into it the next time 
+				# to recurse into it the next time
 				# we are called, then ....
 				if ( $candidate->is_dir ) {
 					push @{$self->{_stack}} => $current->clone( $candidate );
 				}
-				
-				# return our successful candidate 
+
+				# return our successful candidate
 				$next = $candidate;
 				last;
 			}
@@ -104,7 +104,7 @@ sub next {
 			$self->_log('No more streams available in stack') if DEBUG;
 			$self->_log('Exiting loop ... DONE') if DEBUG;
 
-			$self->{_head}    = undef;			
+			$self->{_head}    = undef;
 			$self->{_is_done} = 1;
 			last;
 		}
@@ -118,5 +118,15 @@ sub next {
 __END__
 
 =pod
+
+
+=head1 DESCRIPTION
+
+This is provides a stream that will traverse all encountered
+sub-directories.
+
+=head1 METHODS
+
+This object conforms to the C<Directory::Scanner::API::Stream> API.
 
 =cut

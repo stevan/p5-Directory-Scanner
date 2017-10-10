@@ -10,7 +10,7 @@ use Scalar::Util ();
 use UNIVERSAL::Object;
 use Directory::Scanner::API::Stream;
 
-our $VERSION   = '0.01';
+our $VERSION   = '0.02';
 our $AUTHORITY = 'cpan:STEVAN';
 
 use constant DEBUG => $ENV{DIR_SCANNER_STREAM_TRANSFORMER_DEBUG} // 0;
@@ -23,7 +23,7 @@ our %HAS; BEGIN {
 		stream      => sub {},
 		transformer => sub {},
 		# internal state ...
-		_head      => sub {},		
+		_head      => sub {},
 	)
 }
 
@@ -62,7 +62,7 @@ sub close     { $_[0]->{stream}->close     }
 sub next {
 	my $self = $_[0];
 
-	# skip out early if possible 
+	# skip out early if possible
 	return if $self->{stream}->is_done;
 
 	$self->_log('... calling next on underlying stream') if DEBUG;
@@ -70,7 +70,7 @@ sub next {
 
 	# this means the stream is likely exhausted
 	unless ( defined $next ) {
-		$self->{_head} = undef;			
+		$self->{_head} = undef;
 		return;
 	}
 
@@ -86,5 +86,14 @@ sub next {
 __END__
 
 =pod
+
+=head1 DESCRIPTION
+
+This is provides a stream that will transform each item using the
+given C<transformer> CODE ref.
+
+=head1 METHODS
+
+This object conforms to the C<Directory::Scanner::API::Stream> API.
 
 =cut

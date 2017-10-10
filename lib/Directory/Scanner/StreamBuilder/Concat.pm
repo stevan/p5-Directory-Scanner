@@ -1,5 +1,5 @@
 package Directory::Scanner::StreamBuilder::Concat;
-# ABSTRACT: Connect streaming directory iterators 
+# ABSTRACT: Connect streaming directory iterators
 
 use strict;
 use warnings;
@@ -10,7 +10,7 @@ use Scalar::Util ();
 use UNIVERSAL::Object;
 use Directory::Scanner::API::Stream;
 
-our $VERSION   = '0.01';
+our $VERSION   = '0.02';
 our $AUTHORITY = 'cpan:STEVAN';
 
 use constant DEBUG => $ENV{DIR_SCANNER_STREAM_CONCAT_DEBUG} // 0;
@@ -20,7 +20,7 @@ use constant DEBUG => $ENV{DIR_SCANNER_STREAM_CONCAT_DEBUG} // 0;
 our @ISA; BEGIN { @ISA = ('UNIVERSAL::Object', 'Directory::Scanner::API::Stream') }
 our %HAS; BEGIN {
 	%HAS = (
-		streams    => sub { [] }, 
+		streams    => sub { [] },
 		# internal state ...
 		_index     => sub { 0 },
 		_is_done   => sub { 0 },
@@ -30,13 +30,13 @@ our %HAS; BEGIN {
 
 ## ...
 
-sub BUILD { 
+sub BUILD {
 	my $self    = $_[0];
 	my $streams = $self->{streams};
 
-	(Scalar::Util::blessed($_) && $_->DOES('Directory::Scanner::API::Stream')) 
+	(Scalar::Util::blessed($_) && $_->DOES('Directory::Scanner::API::Stream'))
 		|| Carp::confess 'You must supply all directory stream objects'
-			foreach @$streams;		
+			foreach @$streams;
 }
 
 sub clone {
@@ -44,9 +44,9 @@ sub clone {
 	Carp::confess 'Cloning a concat stream is not a good idea, just dont do it';
 }
 
-## delegate 
+## delegate
 
-sub head { 
+sub head {
 	my $self = $_[0];
 	return if $self->{_index} > $#{$self->{streams}};
 	return $self->{streams}->[ $self->{_index} ]->head;
@@ -55,13 +55,13 @@ sub head {
 sub is_done   { $_[0]->{_is_done}   }
 sub is_closed { $_[0]->{_is_closed} }
 
-sub close { 
+sub close {
 	my $self = $_[0];
 	foreach my $stream ( @{ $self->{streams} } ) {
 		$stream->close;
 	}
-	$_[0]->{_is_closed} = 1; 
-	return 
+	$_[0]->{_is_closed} = 1;
+	return
 }
 
 sub next {
@@ -70,7 +70,7 @@ sub next {
 	return if $self->{_is_done};
 
 	Carp::confess 'Cannot call `next` on a closed stream'
-		if $self->{_is_closed};	
+		if $self->{_is_closed};
 
 	my $next;
 	while (1) {
@@ -78,34 +78,34 @@ sub next {
 		$self->_log('Entering loop ... ') if DEBUG;
 
 		if ( $self->{_index} > $#{$self->{streams}} ) {
-			# end of the streams now ... 
+			# end of the streams now ...
 			$self->{_is_done} = 1;
-			last; 
+			last;
 		}
-		
+
 		my $current = $self->{streams}->[ $self->{_index} ];
 
 		if ( $current->is_done ) {
-			# if we are done, advance the 
-			# index and restart the loop 
-			$self->{_index}++; 
-			next;			
+			# if we are done, advance the
+			# index and restart the loop
+			$self->{_index}++;
+			next;
 		}
 		else {
-			$next = $current->next;	
+			$next = $current->next;
 
 			# if next returns nothing,
-			# then we now done, so 
-			# restart the loop which 
+			# then we now done, so
+			# restart the loop which
 			# will trigger the ->is_done
 			# block above and DWIM
 			next unless defined $next;
 
 			$self->_log('Exiting loop ... ') if DEBUG;
 
-			# if we have gotten to this 
+			# if we have gotten to this
 			# point, we have a value and
-			# want to return it 
+			# want to return it
 			last;
 		}
 	}
@@ -118,5 +118,14 @@ sub next {
 __END__
 
 =pod
+
+=head1 DESCRIPTION
+
+Given multiple streams, this will concat them together one
+after another.
+
+=head1 METHODS
+
+This object conforms to the C<Directory::Scanner::API::Stream> API.
 
 =cut

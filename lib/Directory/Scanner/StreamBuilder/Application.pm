@@ -10,7 +10,7 @@ use Scalar::Util ();
 use UNIVERSAL::Object;
 use Directory::Scanner::API::Stream;
 
-our $VERSION   = '0.01';
+our $VERSION   = '0.02';
 our $AUTHORITY = 'cpan:STEVAN';
 
 use constant DEBUG => $ENV{DIR_SCANNER_STREAM_APPLICATION_DEBUG} // 0;
@@ -68,7 +68,7 @@ sub next {
     local $_ = $next;
 	$self->{function}->( $next );
 
-	# return the next value 
+	# return the next value
 	return $next;
 }
 
@@ -77,5 +77,14 @@ sub next {
 __END__
 
 =pod
+
+=head1 DESCRIPTION
+
+This is provides a stream that will apply a function to each item
+using the given C<function> CODE ref.
+
+=head1 METHODS
+
+This object conforms to the C<Directory::Scanner::API::Stream> API.
 
 =cut

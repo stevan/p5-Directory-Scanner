@@ -1,5 +1,5 @@
 package Directory::Scanner::Stream;
-# ABSTRACT: Streaming directory iterator 
+# ABSTRACT: Streaming directory iterator
 
 use strict;
 use warnings;
@@ -11,7 +11,7 @@ use Path::Tiny   ();
 use UNIVERSAL::Object;
 use Directory::Scanner::API::Stream;
 
-our $VERSION   = '0.01';
+our $VERSION   = '0.02';
 our $AUTHORITY = 'cpan:STEVAN';
 
 use constant DEBUG => $ENV{DIR_SCANNER_STREAM_DEBUG} // 0;
@@ -23,10 +23,10 @@ our %HAS; BEGIN {
 	%HAS = (
 		origin     => sub { die 'You must supply a `origin` directory path' },
 		# internal state ...
-		_head      => sub {},		
+		_head      => sub {},
 		_handle    => sub {},
 		_is_done   => sub { 0 },
-		_is_closed => sub { 0 },		
+		_is_closed => sub { 0 },
 	)
 }
 
@@ -38,16 +38,16 @@ sub BUILD {
 	my $dir = $self->{origin};
 
 	# upgrade this to a Path:Tiny
-	# object if needed 
-	$self->{origin} = $dir = Path::Tiny::path( $dir ) 
-		unless Scalar::Util::blessed( $dir ) 
+	# object if needed
+	$self->{origin} = $dir = Path::Tiny::path( $dir )
+		unless Scalar::Util::blessed( $dir )
 			&& $dir->isa('Path::Tiny');
 
-	# make sure the directory is 
+	# make sure the directory is
 	# fit to be streamed
 	(-d $dir)
 		|| Carp::confess 'Supplied path value must be a directory ('.$dir.')';
-	(-r $dir) 
+	(-r $dir)
 		|| Carp::confess 'Supplied path value must be a readable directory ('.$dir.')';
 
 	my $handle;
@@ -63,7 +63,7 @@ sub clone {
 	return $self->new( origin => $dir );
 }
 
-## accessor 
+## accessor
 
 sub origin { $_[0]->{_origin} }
 
@@ -102,7 +102,7 @@ sub next {
 			$self->_log('Got ('.$name.') from directory read ...') if DEBUG;
 			next if $name eq '.' || $name eq '..'; # skip these ...
 
-			$next = $self->{origin}->child( $name );		
+			$next = $self->{origin}->child( $name );
 
 			# directory is not readable or has been removed, so skip it
 			if ( ! -r $next ) {
@@ -134,5 +134,13 @@ sub next {
 __END__
 
 =pod
+
+=head1 DESCRIPTION
+
+This is provides a stream of a given C<origin> directory.
+
+=head1 METHODS
+
+This object conforms to the C<Directory::Scanner::API::Stream> API.
 
 =cut
