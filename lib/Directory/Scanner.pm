@@ -12,7 +12,7 @@ use Directory::Scanner::API::Stream;
 use Directory::Scanner::Stream;
 use Directory::Scanner::Stream::Concat;
 
-our $VERSION   = '0.02';
+our $VERSION   = '0.03';
 our $AUTHORITY = 'cpan:STEVAN';
 
 ## static builder constructors
