@@ -15,7 +15,7 @@ my $ROOT = $FindBin::Bin.'/data/';
 
 subtest '... basic recursive stream test' => sub {
 
-	my $stream = Directory::Scanner->for( $ROOT )->recurse->stream;
+	my $stream = Directory::Scanner->for( $ROOT )->recurse;
 	isa_ok($stream, 'Directory::Scanner::Stream::Recursive');
 
 	ok(!$stream->is_done, '... the stream is not done');
@@ -55,7 +55,7 @@ subtest '... basic recursive stream test' => sub {
 
 subtest '... basic recursive stream test using flatten' => sub {
 
-	my $stream = Directory::Scanner->for( $ROOT )->recurse->stream;
+	my $stream = Directory::Scanner->for( $ROOT )->recurse;
 	isa_ok($stream, 'Directory::Scanner::Stream::Recursive');
 
 	ok(!$stream->is_done, '... the stream is not done');

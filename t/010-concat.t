@@ -16,8 +16,8 @@ my $ROOT = $FindBin::Bin.'/data/';
 subtest '... basic recursive stream test' => sub {
 
 	my $stream = Directory::Scanner->concat(
-		Directory::Scanner->for( $ROOT.'lib/Foo' )->recurse->stream,
-		Directory::Scanner->for( $ROOT.'t/'      )->stream
+		Directory::Scanner->for( $ROOT.'lib/Foo' )->recurse,
+		Directory::Scanner->for( $ROOT.'t/'      ),
 	);
 	isa_ok($stream, 'Directory::Scanner::Stream::Concat');
 

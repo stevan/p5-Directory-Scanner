@@ -18,8 +18,7 @@ subtest '... twisted filtered stream test' => sub {
 	my $stream = Directory::Scanner->for( $ROOT )
 					  			   ->recurse
 					  			   ->match(sub { $_->is_file })
-					  			   ->transform(sub { $_->relative( $ROOT ) })
-					  	           ->stream;
+					  			   ->transform(sub { $_->relative( $ROOT ) });
 	isa_ok($stream, 'Directory::Scanner::Stream::Transformer');
 
 	ok(!$stream->is_done, '... the stream is not done');
@@ -58,8 +57,7 @@ subtest '... twisted filtered stream test with flatten' => sub {
 	my $stream = Directory::Scanner->for( $ROOT )
 					  			   ->recurse
 					  			   ->match(sub { $_->is_file })
-					  			   ->transform(sub { $_->relative( $ROOT ) })
-					  	           ->stream;
+					  			   ->transform(sub { $_->relative( $ROOT ) });
 	isa_ok($stream, 'Directory::Scanner::Stream::Transformer');
 
 	ok(!$stream->is_done, '... the stream is not done');

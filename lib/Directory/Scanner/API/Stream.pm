@@ -34,31 +34,29 @@ sub flatten {
 	return @results;
 }
 
-sub stream { $_[0] }
-
 sub recurse {
-    my ($stream) = @_;
-    Directory::Scanner::Stream::Recursive->new( stream => $stream );
+    my ($self) = @_;
+    Directory::Scanner::Stream::Recursive->new( stream => $self );
 }
 
 sub ignore {
-    my ($stream, $filter) = @_;
-    Directory::Scanner::Stream::Ignoring->new( stream => $stream, filter => $filter );
+    my ($self, $filter) = @_;
+    Directory::Scanner::Stream::Ignoring->new( stream => $self, filter => $filter );
 }
 
 sub match {
-    my ($stream, $predicate) = @_;
-    Directory::Scanner::Stream::Matching->new( stream => $stream, predicate => $predicate );
+    my ($self, $predicate) = @_;
+    Directory::Scanner::Stream::Matching->new( stream => $self, predicate => $predicate );
 }
 
 sub apply {
-    my ($stream, $function) = @_;
-    Directory::Scanner::Stream::Application->new( stream => $stream, function => $function );
+    my ($self, $function) = @_;
+    Directory::Scanner::Stream::Application->new( stream => $self, function => $function );
 }
 
 sub transform {
-    my ($stream, $transformer) = @_;
-    Directory::Scanner::Stream::Transformer->new( stream => $stream, transformer => $transformer );
+    my ($self, $transformer) = @_;
+    Directory::Scanner::Stream::Transformer->new( stream => $self, transformer => $transformer );
 }
 
 ## ...

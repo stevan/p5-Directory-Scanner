@@ -17,8 +17,7 @@ subtest '... twisted filtered stream test' => sub {
 
 	my $stream = Directory::Scanner->for( $ROOT )
 					  			   ->ignore( sub { $_->is_file } )
-					  			   ->recurse
-					  			   ->stream;
+					  			   ->recurse;
 	isa_ok($stream, 'Directory::Scanner::Stream::Recursive');
 
 	ok(!$stream->is_done, '... the stream is not done');
@@ -55,8 +54,7 @@ subtest '... no results filtered stream test' => sub {
 
 	my $stream = Directory::Scanner->for( $ROOT )
 					  			   ->ignore( sub { $_->is_dir } )
-					  			   ->recurse
-					  			   ->stream;
+					  			   ->recurse;
 	isa_ok($stream, 'Directory::Scanner::Stream::Recursive');
 
 	ok(!$stream->is_done, '... the stream is not done');
@@ -78,8 +76,7 @@ subtest '... twisted filtered stream test with flatten' => sub {
 
 	my $stream = Directory::Scanner->for( $ROOT )
 					  			   ->ignore( sub { $_->is_file } )
-					  			   ->recurse
-					  			   ->stream;
+					  			   ->recurse;
 	isa_ok($stream, 'Directory::Scanner::Stream::Recursive');
 
 	ok(!$stream->is_done, '... the stream is not done');
