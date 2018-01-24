@@ -63,22 +63,19 @@ __END__
 
 =head1 DESCRIPTION
 
-This module provides a streaming interface for traversing
-directories. Unlike most modules that provide similar
-capabilities, this will not pre-fetch the list of files
-or directories, but instead will only focus on one thing
-at a time. This is useful if you have a large directory
-tree and need to do a lot of resource intensive work on
-each file.
+This module provides a streaming interface for traversing directories.
+Unlike most modules that provide similar capabilities, this will not
+pre-fetch the list of files or directories, but instead will only focus
+on one thing at a time. This is useful if you have a large directory tree
+and need to do a lot of resource intensive work on each file.
 
 =head2 Builders
 
-This module uses the builder pattern to create the
-L<Directory::Scanner> stream you need. If you look in
-the L<SYNOPSIS> above you can see that the C<for> method
-starts the creation of a builder. All the susequent
-chained methods simply wrap the original stream and perform
-the task needed.
+This module uses the builder pattern to create the L<Directory::Scanner>
+stream you need. If you look in the L<SYNOPSIS> above you can see that
+the C<for> method starts the creation of a builder. All the susequent
+chained methods simply wrap the original stream and perform the task
+needed.
 
 =head2 Streams
 
@@ -88,14 +85,12 @@ See the "API METHODS" section of L<Directory::Scanner::API::Stream>.
 
 =head2 C<for($dir)>
 
-Begins the construction of a C<StreamBuilder> to eventually
-create a stream for scanning the given C<$dir>.
+Constructs a stream for scanning the given C<$dir>.
 
 =head2 C<concat(@streams)>
 
 This concatenates multiple streams into a single stream, and
-will return an instance that does the
-C<Directory::Scanner::API::Stream> role.
+will return an instance that concats the streams together.
 
 =cut
 
