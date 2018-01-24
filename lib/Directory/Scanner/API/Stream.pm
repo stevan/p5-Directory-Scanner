@@ -4,6 +4,12 @@ package Directory::Scanner::API::Stream;
 use strict;
 use warnings;
 
+use Directory::Scanner::Stream::Recursive;
+use Directory::Scanner::Stream::Matching;
+use Directory::Scanner::Stream::Ignoring;
+use Directory::Scanner::Stream::Application;
+use Directory::Scanner::Stream::Transformer;
+
 our $VERSION   = '0.02';
 our $AUTHORITY = 'cpan:STEVAN';
 
@@ -28,6 +34,33 @@ sub flatten {
 	return @results;
 }
 
+sub stream { $_[0] }
+
+sub recurse {
+    my ($stream) = @_;
+    Directory::Scanner::Stream::Recursive->new( stream => $stream );
+}
+
+sub ignore {
+    my ($stream, $filter) = @_;
+    Directory::Scanner::Stream::Ignoring->new( stream => $stream, filter => $filter );
+}
+
+sub match {
+    my ($stream, $predicate) = @_;
+    Directory::Scanner::Stream::Matching->new( stream => $stream, predicate => $predicate );
+}
+
+sub apply {
+    my ($stream, $function) = @_;
+    Directory::Scanner::Stream::Application->new( stream => $stream, function => $function );
+}
+
+sub transform {
+    my ($stream, $transformer) = @_;
+    Directory::Scanner::Stream::Transformer->new( stream => $stream, transformer => $transformer );
+}
+
 ## ...
 
 # shhh, I shouldn't do this
@@ -48,7 +81,7 @@ __END__
 This is a simple API role that defines what a stream object
 can do.
 
-=head1 METHODS
+=head1 API METHODS
 
 =head2 C<next>
 
@@ -82,9 +115,46 @@ by someone calling the C<close> method.
 This will clone a given stream and can optionally be
 given a different directory to scan.
 
+=head1 UTILITY METHODS
+
 =head2 C<flatten>
 
 This will take a given stream and flatten it into an
 array.
+
+=head2 C<recurse>
+
+By default a scanner will not try to recurse into subdirectories,
+if that is what you want, you must call this builder method.
+
+See L<Directory::Scanner::Stream::Recursive> for more info.
+
+=head2 C<ignore($filter)>
+
+Construct a stream that will ignore anything that is matched by
+the C<$filter> CODE ref.
+
+See L<Directory::Scanner::Stream::Ignoring> for more info.
+
+=head2 C<match($predicate)>
+
+Construct a stream that will keep anything that is matched by
+the C<$predicate> CODE ref.
+
+See L<Directory::Scanner::Stream::Matching> for more info.
+
+=head2 C<apply($function)>
+
+Construct a stream that will apply the C<$function> to each
+element in the stream without modifying it.
+
+See L<Directory::Scanner::Stream::Application> for more info.
+
+=head2 C<transform($transformer)>
+
+Construct a stream that will apply the C<$transformer> to each
+element in the stream and modify it.
+
+See L<Directory::Scanner::Stream::Transformer> for more info.
 
 =cut

@@ -1,4 +1,4 @@
-package Directory::Scanner::StreamBuilder::Concat;
+package Directory::Scanner::Stream::Concat;
 # ABSTRACT: Connect streaming directory iterators
 
 use strict;

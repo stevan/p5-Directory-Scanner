@@ -1,5 +1,5 @@
-package Directory::Scanner::StreamBuilder::Transformer;
-# ABSTRACT: Fmap a streaming directory iterator
+package Directory::Scanner::Stream::Application;
+# ABSTRACT: Apply function to streaming directory iterator
 
 use strict;
 use warnings;
@@ -13,17 +13,15 @@ use Directory::Scanner::API::Stream;
 our $VERSION   = '0.02';
 our $AUTHORITY = 'cpan:STEVAN';
 
-use constant DEBUG => $ENV{DIR_SCANNER_STREAM_TRANSFORMER_DEBUG} // 0;
+use constant DEBUG => $ENV{DIR_SCANNER_STREAM_APPLICATION_DEBUG} // 0;
 
 ## ...
 
 our @ISA; BEGIN { @ISA = ('UNIVERSAL::Object', 'Directory::Scanner::API::Stream') }
 our %HAS; BEGIN {
 	%HAS = (
-		stream      => sub {},
-		transformer => sub {},
-		# internal state ...
-		_head      => sub {},
+		stream   => sub {},
+		function => sub {},
 	)
 }
 
@@ -32,53 +30,46 @@ our %HAS; BEGIN {
 sub BUILD {
 	my $self   = $_[0];
 	my $stream = $self->{stream};
-	my $f      = $self->{transformer};
+	my $f      = $self->{function};
 
 	(Scalar::Util::blessed($stream) && $stream->DOES('Directory::Scanner::API::Stream'))
 		|| Carp::confess 'You must supply a directory stream';
 
 	(defined $f)
-		|| Carp::confess 'You must supply a `transformer` value';
+		|| Carp::confess 'You must supply a `function` value';
 
 	(ref $f eq 'CODE')
-		|| Carp::confess 'The `transformer` value supplied must be a CODE reference';
+		|| Carp::confess 'The `function` value supplied must be a CODE reference';
 }
 
 sub clone {
 	my ($self, $dir) = @_;
 	return $self->new(
-		stream      => $self->{stream}->clone( $dir ),
-		transformer => $self->{transformer}
+		stream   => $self->{stream}->clone( $dir ),
+		function => $self->{function}
 	);
 }
 
 ## delegate
 
-sub head      { $_[0]->{_head}             }
+sub head      { $_[0]->{stream}->head      }
 sub is_done   { $_[0]->{stream}->is_done   }
 sub is_closed { $_[0]->{stream}->is_closed }
 sub close     { $_[0]->{stream}->close     }
 
 sub next {
 	my $self = $_[0];
-
-	# skip out early if possible
-	return if $self->{stream}->is_done;
-
-	$self->_log('... calling next on underlying stream') if DEBUG;
 	my $next = $self->{stream}->next;
 
 	# this means the stream is likely exhausted
-	unless ( defined $next ) {
-		$self->{_head} = undef;
-		return;
-	}
+	return unless defined $next;
 
-	$self->_log('got value from stream'.$next.', transforming it now') if DEBUG;
-
-	# return the result of the Fmap
+	# apply the function ...
     local $_ = $next;
-	return $self->{_head} = $self->{transformer}->( $next );
+	$self->{function}->( $next );
+
+	# return the next value
+	return $next;
 }
 
 1;
@@ -89,8 +80,8 @@ __END__
 
 =head1 DESCRIPTION
 
-This is provides a stream that will transform each item using the
-given C<transformer> CODE ref.
+This is provides a stream that will apply a function to each item
+using the given C<function> CODE ref.
 
 =head1 METHODS
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env perl 
+#!/usr/bin/env perl
 
 use strict;
 use warnings;
@@ -19,11 +19,11 @@ subtest '... basic recursive stream test' => sub {
 		Directory::Scanner->for( $ROOT.'lib/Foo' )->recurse->stream,
 		Directory::Scanner->for( $ROOT.'t/'      )->stream
 	);
-	isa_ok($stream, 'Directory::Scanner::StreamBuilder::Concat');
+	isa_ok($stream, 'Directory::Scanner::Stream::Concat');
 
 	ok(!$stream->is_done, '... the stream is not done');
 	ok(!$stream->is_closed, '... the stream is not closed');
-	ok(!defined($stream->head), '... nothing in the head of the stream');	
+	ok(!defined($stream->head), '... nothing in the head of the stream');
 
 	my @all;
 	while ( my $i = $stream->next ) {
@@ -32,14 +32,14 @@ subtest '... basic recursive stream test' => sub {
 	}
 
 	is_deeply(
-		[ sort @all ], 
-		[qw[ 
+		[ sort @all ],
+		[qw[
 			lib/Foo/Bar
 			lib/Foo/Bar.pm
-			lib/Foo/Bar/Baz.pm					 
+			lib/Foo/Bar/Baz.pm
 			t/000-load.pl
 			t/001-basic.pl
-		]], 
+		]],
 		'... got the list of directories'
 	);
 
@@ -49,7 +49,7 @@ subtest '... basic recursive stream test' => sub {
 
 	is(exception { $stream->close }, undef, '... closed stream successfully');
 
-	ok($stream->is_closed, '... the stream is closed');	
+	ok($stream->is_closed, '... the stream is closed');
 };
 
 done_testing;
