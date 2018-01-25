@@ -24,33 +24,20 @@ subtest '... twisted filtered stream test' => sub {
     ok(!$stream->is_closed, '... the stream is not closed');
     ok(!defined($stream->head), '... nothing in the head of the stream');
 
-    my @all;
     for ( 0 .. 2 ) {
         my $i = $stream->next;
-        push @all => $i;
         is($i, $stream->head, '... the head is the same as the value returned by next');
+        ok($i->is_absolute, '... this is an absolute path');
+        like($i->stringify, qr/^$ROOT/, '... these all begin with the expected root');
     }
 
     $stream = $stream->transform(sub { $_->relative( $ROOT ) });
 
     while ( my $i = $stream->next ) {
-        push @all => $i;
         is($i, $stream->head, '... the head is the same as the value returned by next');
+        ok(!$i->is_absolute, '... this is not an absolute path');
+        unlike($i->stringify, qr/^$ROOT/, '... none of these all begin with the expected root');
     }
-
-    is_deeply(
-        [ sort @all ],
-        [
-            "${ROOT}lib/Foo.pm",
-            "${ROOT}lib/Foo/Bar.pm",
-            "${ROOT}lib/Foo/Bar/Baz.pm",
-            qw[
-                t/000-load.pl
-                t/001-basic.pl
-            ]
-        ],
-        '... got the list of directories'
-    );
 
     ok($stream->is_done, '... the stream is done');
     ok(!$stream->is_closed, '... but the stream is not closed');
