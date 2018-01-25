@@ -4,12 +4,6 @@ package Directory::Scanner::API::Stream;
 use strict;
 use warnings;
 
-use Directory::Scanner::Stream::Recursive;
-use Directory::Scanner::Stream::Matching;
-use Directory::Scanner::Stream::Ignoring;
-use Directory::Scanner::Stream::Application;
-use Directory::Scanner::Stream::Transformer;
-
 our $VERSION   = '0.03';
 our $AUTHORITY = 'cpan:STEVAN';
 
@@ -34,28 +28,40 @@ sub flatten {
 	return @results;
 }
 
+# IMPORTANT NOTE:
+# We have a bit of a recursive dependency issue here, which
+# is that these methods are being defined here as calls to
+# other classes, all of which also `do` this role. This means
+# that we need to lazy load things here so as to avoid load
+# ordering issues elsewhere.
+
 sub recurse {
     my ($self) = @_;
+    require Directory::Scanner::Stream::Recursive;
     Directory::Scanner::Stream::Recursive->new( stream => $self );
 }
 
 sub ignore {
     my ($self, $filter) = @_;
+    require Directory::Scanner::Stream::Ignoring;
     Directory::Scanner::Stream::Ignoring->new( stream => $self, filter => $filter );
 }
 
 sub match {
     my ($self, $predicate) = @_;
+    require Directory::Scanner::Stream::Matching;
     Directory::Scanner::Stream::Matching->new( stream => $self, predicate => $predicate );
 }
 
 sub apply {
     my ($self, $function) = @_;
+    require Directory::Scanner::Stream::Application;
     Directory::Scanner::Stream::Application->new( stream => $self, function => $function );
 }
 
 sub transform {
     my ($self, $transformer) = @_;
+    require Directory::Scanner::Stream::Transformer;
     Directory::Scanner::Stream::Transformer->new( stream => $self, transformer => $transformer );
 }
 
