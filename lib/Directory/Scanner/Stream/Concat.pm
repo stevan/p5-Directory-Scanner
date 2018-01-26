@@ -7,9 +7,6 @@ use warnings;
 use Carp         ();
 use Scalar::Util ();
 
-use UNIVERSAL::Object;
-use Directory::Scanner::API::Stream;
-
 our $VERSION   = '0.03';
 our $AUTHORITY = 'cpan:STEVAN';
 
@@ -17,16 +14,15 @@ use constant DEBUG => $ENV{DIR_SCANNER_STREAM_CONCAT_DEBUG} // 0;
 
 ## ...
 
-our @ISA; BEGIN { @ISA = ('UNIVERSAL::Object', 'Directory::Scanner::API::Stream') }
-our %HAS; BEGIN {
-	%HAS = (
-		streams    => sub { [] },
-		# internal state ...
-		_index     => sub { 0 },
-		_is_done   => sub { 0 },
-		_is_closed => sub { 0 },
-	)
-}
+use parent 'UNIVERSAL::Object';
+use roles 'Directory::Scanner::API::Stream';
+use slots (
+	streams    => sub { [] },
+	# internal state ...
+	_index     => sub { 0 },
+	_is_done   => sub { 0 },
+	_is_closed => sub { 0 },
+);
 
 ## ...
 
@@ -34,7 +30,7 @@ sub BUILD {
 	my $self    = $_[0];
 	my $streams = $self->{streams};
 
-	(Scalar::Util::blessed($_) && $_->DOES('Directory::Scanner::API::Stream'))
+	(Scalar::Util::blessed($_) && $_->roles::DOES('Directory::Scanner::API::Stream'))
 		|| Carp::confess 'You must supply all directory stream objects'
 			foreach @$streams;
 }

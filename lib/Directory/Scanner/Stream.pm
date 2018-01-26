@@ -8,9 +8,6 @@ use Carp         ();
 use Scalar::Util ();
 use Path::Tiny   ();
 
-use UNIVERSAL::Object;
-use Directory::Scanner::API::Stream;
-
 our $VERSION   = '0.03';
 our $AUTHORITY = 'cpan:STEVAN';
 
@@ -18,17 +15,16 @@ use constant DEBUG => $ENV{DIR_SCANNER_STREAM_DEBUG} // 0;
 
 ## ...
 
-our @ISA; BEGIN { @ISA = ('UNIVERSAL::Object', 'Directory::Scanner::API::Stream') }
-our %HAS; BEGIN {
-	%HAS = (
-		origin     => sub { die 'You must supply a `origin` directory path' },
-		# internal state ...
-		_head      => sub {},
-		_handle    => sub {},
-		_is_done   => sub { 0 },
-		_is_closed => sub { 0 },
-	)
-}
+use parent 'UNIVERSAL::Object';
+use roles 'Directory::Scanner::API::Stream';
+use slots (
+	origin     => sub { die 'You must supply a `origin` directory path' },
+	# internal state ...
+	_head      => sub {},
+	_handle    => sub {},
+	_is_done   => sub { 0 },
+	_is_closed => sub { 0 },
+);
 
 ## ...
 
