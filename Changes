@@ -1,6 +1,6 @@
 Revision history for Perl extension Directory::Scanner
 
-0.03
+0.03 2018-01-29
     [!!BREAKING CHANGES!!]
     - major re-arrangement of the internals for building
       a stream, there is no longer an endpoint called
