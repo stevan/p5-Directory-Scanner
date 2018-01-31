@@ -4,7 +4,7 @@ package Directory::Scanner::API::Stream;
 use strict;
 use warnings;
 
-our $VERSION   = '0.03';
+our $VERSION   = '0.04';
 our $AUTHORITY = 'cpan:STEVAN';
 
 sub head;

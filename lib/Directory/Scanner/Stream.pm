@@ -8,7 +8,7 @@ use Carp         ();
 use Scalar::Util ();
 use Path::Tiny   ();
 
-our $VERSION   = '0.03';
+our $VERSION   = '0.04';
 our $AUTHORITY = 'cpan:STEVAN';
 
 use constant DEBUG => $ENV{DIR_SCANNER_STREAM_DEBUG} // 0;
