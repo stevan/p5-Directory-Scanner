@@ -25,7 +25,7 @@ sub for {
 sub concat {
     my (undef, @streams) = @_;
 
-    Carp::confess 'You provide at least two streams to concat'
+    Carp::confess 'You must provide at least two streams to concat'
         if scalar @streams < 2;
 
     return Directory::Scanner::Stream::Concat->new( streams => [ @streams ] );
