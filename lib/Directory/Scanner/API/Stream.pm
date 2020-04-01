@@ -1,77 +1,66 @@
-package Directory::Scanner::API::Stream;
-# ABSTRACT: Streaming directory iterator abstract interface
+role Directory::Scanner::API::Stream 0.04 {
 
-use strict;
-use warnings;
+    method head;
 
-our $VERSION   = '0.04';
-our $AUTHORITY = 'cpan:STEVAN';
+    method is_done;
+    method is_closed;
 
-sub head;
+    method close;
+    method next;
 
-sub is_done;
-sub is_closed;
+    method clone; # ( $dir => Path::Tiny )
 
-sub close;
-sub next;
 
-sub clone; # ( $dir => Path::Tiny )
+    ## ...
 
-## ...
+    method flatten ($self) {
+    	my @results;
+    	while ( my $next = $self->next ) {
+    		push @results => $next;
+    	}
+    	return @results;
+    }
 
-sub flatten {
-	my ($self) = @_;
-	my @results;
-	while ( my $next = $self->next ) {
-		push @results => $next;
-	}
-	return @results;
-}
+    # IMPORTANT NOTE:
+    # We have a bit of a recursive dependency issue here, which
+    # is that these methods are being defined here as calls to
+    # other classes, all of which also `do` this role. This means
+    # that we need to lazy load things here so as to avoid load
+    # ordering issues elsewhere.
 
-# IMPORTANT NOTE:
-# We have a bit of a recursive dependency issue here, which
-# is that these methods are being defined here as calls to
-# other classes, all of which also `do` this role. This means
-# that we need to lazy load things here so as to avoid load
-# ordering issues elsewhere.
+    method recurse ($self) {
+        require Directory::Scanner::Stream::Recursive;
+        Directory::Scanner::Stream::Recursive->new( stream => $self );
+    }
 
-sub recurse {
-    my ($self) = @_;
-    require Directory::Scanner::Stream::Recursive;
-    Directory::Scanner::Stream::Recursive->new( stream => $self );
-}
+    method ignore ($self, $filter) {
+        require Directory::Scanner::Stream::Ignoring;
+        Directory::Scanner::Stream::Ignoring->new( stream => $self, filter => $filter );
+    }
 
-sub ignore {
-    my ($self, $filter) = @_;
-    require Directory::Scanner::Stream::Ignoring;
-    Directory::Scanner::Stream::Ignoring->new( stream => $self, filter => $filter );
-}
+    method match ($self, $predicate) {
+        require Directory::Scanner::Stream::Matching;
+        Directory::Scanner::Stream::Matching->new( stream => $self, predicate => $predicate );
+    }
 
-sub match {
-    my ($self, $predicate) = @_;
-    require Directory::Scanner::Stream::Matching;
-    Directory::Scanner::Stream::Matching->new( stream => $self, predicate => $predicate );
-}
+    method apply ($self, $function) {
+        require Directory::Scanner::Stream::Application;
+        Directory::Scanner::Stream::Application->new( stream => $self, function => $function );
+    }
 
-sub apply {
-    my ($self, $function) = @_;
-    require Directory::Scanner::Stream::Application;
-    Directory::Scanner::Stream::Application->new( stream => $self, function => $function );
-}
+    method transform ($self, $transformer) {
+        require Directory::Scanner::Stream::Transformer;
+        Directory::Scanner::Stream::Transformer->new( stream => $self, transformer => $transformer );
+    }
 
-sub transform {
-    my ($self, $transformer) = @_;
-    require Directory::Scanner::Stream::Transformer;
-    Directory::Scanner::Stream::Transformer->new( stream => $self, transformer => $transformer );
-}
+    ## ...
 
-## ...
-
-# shhh, I shouldn't do this
-sub _log {
-	my ($self, @msg) = @_;
-    warn( @msg, "\n" );
-    return;
+    # shhh, I shouldn't do this
+    method _log {
+    	my ($self, @msg) = @_;
+        warn( @msg, "\n" );
+        return;
+    }
 }
 
 1;

@@ -1,128 +1,120 @@
-package Directory::Scanner::Stream;
-# ABSTRACT: Streaming directory iterator
-
-use strict;
-use warnings;
 
 use Carp         ();
 use Scalar::Util ();
 use Path::Tiny   ();
 
-our $VERSION   = '0.04';
-our $AUTHORITY = 'cpan:STEVAN';
+class Directory::Scanner::Stream does Directory::Scanner::API::Stream {
 
-use constant DEBUG => $ENV{DIR_SCANNER_STREAM_DEBUG} // 0;
+    # constant
 
-## ...
+    method DEBUG () { $ENV{DIR_SCANNER_STREAM_DEBUG} // 0 }
 
-use parent 'UNIVERSAL::Object';
-use roles 'Directory::Scanner::API::Stream';
-use slots (
-	origin     => sub { die 'You must supply a `origin` directory path' },
-	# internal state ...
-	_head      => sub {},
-	_handle    => sub {},
-	_is_done   => sub { 0 },
-	_is_closed => sub { 0 },
-);
+    ## slots
 
-## ...
+    has $!origin : ro;
 
-sub BUILD {
-	my ($self, $params) = @_;
+    # internal state ...
+    has $!_head;
+    has $!_handle;
+    has $!_is_done   = 0;
+    has $!_is_closed = 0;
 
-	my $dir = $self->{origin};
+    ## ... methods
 
-	# upgrade this to a Path:Tiny
-	# object if needed
-	$self->{origin} = $dir = Path::Tiny::path( $dir )
-		unless Scalar::Util::blessed( $dir )
-			&& $dir->isa('Path::Tiny');
+    method BUILDARGS : strict( origin => $!origin );
 
-	# make sure the directory is
-	# fit to be streamed
-	(-d $dir)
-		|| Carp::confess 'Supplied path value must be a directory ('.$dir.')';
-	(-r $dir)
-		|| Carp::confess 'Supplied path value must be a readable directory ('.$dir.')';
+    method BUILD ($self, $params) {
+    	my $dir = $!origin;
 
-	my $handle;
-	opendir( $handle, $dir )
-		|| Carp::confess 'Unable to open handle for directory('.$dir.') because: ' . $!;
+    	# upgrade this to a Path:Tiny
+    	# object if needed
+    	$!origin = $dir = Path::Tiny::path( $dir )
+    		unless Scalar::Util::blessed( $dir )
+    			&& $dir->isa('Path::Tiny');
 
-	$self->{_handle} = $handle;
-}
+    	# make sure the directory is
+    	# fit to be streamed
+    	(-d $dir)
+    		|| Carp::confess 'Supplied path value must be a directory ('.$dir.')';
+    	(-r $dir)
+    		|| Carp::confess 'Supplied path value must be a readable directory ('.$dir.')';
 
-sub clone {
-	my ($self, $dir) = @_;
-	$dir ||= $self->{origin};
-	return $self->new( origin => $dir );
-}
+    	my $handle;
+    	opendir( $handle, $dir )
+    		|| Carp::confess 'Unable to open handle for directory('.$dir.') because: ' . $!;
 
-## accessor
+    	$!_handle = $handle;
+    }
 
-sub origin { $_[0]->{_origin} }
+    ## API::Stream ...
 
-## API::Stream ...
+    method head      : ro($!_head);
+    method is_done   : ro($!_is_done);
+    method is_closed : ro($!_is_closed);
 
-sub head      { $_[0]->{_head}      }
-sub is_done   { $_[0]->{_is_done}   }
-sub is_closed { $_[0]->{_is_closed} }
+    method close ($self) {
+    	closedir( $!_handle )
+    		|| Carp::confess 'Unable to close handle for directory because: ' . $!;
+    	$!_is_closed = 1;
+    	return;
+    }
 
-sub close {
-	closedir( $_[0]->{_handle} )
-		|| Carp::confess 'Unable to close handle for directory because: ' . $!;
-	$_[0]->{_is_closed} = 1;
-	return;
-}
+    method next {
+    	my $self = $_[0];
 
-sub next {
-	my $self = $_[0];
+    	return if $!_is_done;
 
-	return if $self->{_is_done};
+    	Carp::confess 'Cannot call `next` on a closed stream'
+    		if $!_is_closed;
 
-	Carp::confess 'Cannot call `next` on a closed stream'
-		if $self->{_is_closed};
+    	my $next;
+    	while (1) {
+    		undef $next; # clear any previous values, just cause ...
+    		$self->_log('Entering loop ... ') if DEBUG;
 
-	my $next;
-	while (1) {
-		undef $next; # clear any previous values, just cause ...
-		$self->_log('Entering loop ... ') if DEBUG;
+    		$self->_log('About to read directory ...') if DEBUG;
+    		if ( my $name = readdir( $!_handle ) ) {
 
-		$self->_log('About to read directory ...') if DEBUG;
-		if ( my $name = readdir( $self->{_handle} ) ) {
+    			$self->_log('Read directory ...') if DEBUG;
+    			next unless defined $name;
 
-			$self->_log('Read directory ...') if DEBUG;
-			next unless defined $name;
+    			$self->_log('Got ('.$name.') from directory read ...') if DEBUG;
+    			next if $name eq '.' || $name eq '..'; # skip these ...
 
-			$self->_log('Got ('.$name.') from directory read ...') if DEBUG;
-			next if $name eq '.' || $name eq '..'; # skip these ...
+    			$next = $!origin->child( $name );
 
-			$next = $self->{origin}->child( $name );
+    			# directory is not readable or has been removed, so skip it
+    			if ( ! -r $next ) {
+    				$self->_log('Directory/File not readable ...') if DEBUG;
+    				next;
+    			}
+    			else {
+    				$self->_log('Value is good, ready to return it') if DEBUG;
+    				last;
+    			}
+    		}
+    		else {
+    			$self->_log('Exiting loop ... DONE') if DEBUG;
 
-			# directory is not readable or has been removed, so skip it
-			if ( ! -r $next ) {
-				$self->_log('Directory/File not readable ...') if DEBUG;
-				next;
-			}
-			else {
-				$self->_log('Value is good, ready to return it') if DEBUG;
-				last;
-			}
-		}
-		else {
-			$self->_log('Exiting loop ... DONE') if DEBUG;
+    			# cleanup ...
+    			$!_head    = undef;
+    			$!_is_done = 1;
+    			last;
+    		}
+    		$self->_log('... looping') if DEBUG;
+    	}
 
-			# cleanup ...
-			$self->{_head}    = undef;
-			$self->{_is_done} = 1;
-			last;
-		}
-		$self->_log('... looping') if DEBUG;
-	}
+    	$self->_log('Got next value('.$next.')') if DEBUG;
+    	return $!_head = $next;
+    }
 
-	$self->_log('Got next value('.$next.')') if DEBUG;
-	return $self->{_head} = $next;
+
+    method clone {
+        my ($self, $dir) = @_;
+        $dir ||= $!origin;
+        return $self->new( origin => $dir );
+    }
+
 }
 
 1;
