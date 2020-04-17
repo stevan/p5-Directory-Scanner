@@ -1,15 +1,17 @@
 use Carp         ();
 use Scalar::Util ();
 
-class Directory::Scanner::Stream::Recursive does Directory::Scanner::API::Stream {
+module Directory::Scanner;
+
+class Stream::Recursive does API::Stream {
 
     # constant
 
-    method DEBUG () { $ENV{DIR_SCANNER_STREAM_RECURSIVE_DEBUG} // 0 }
+    const DEBUG = $ENV{DIR_SCANNER_STREAM_RECURSIVE_DEBUG} // 0;
 
     ## slots
 
-	has $!stream;
+	has $.stream;
 	# internal state ...
 	has $!_head;
 	has $!_stack     = [];
@@ -18,18 +20,16 @@ class Directory::Scanner::Stream::Recursive does Directory::Scanner::API::Stream
 
     ## ...
 
-    method BUILDARGS : strict( stream => $!stream );
+    method BUILD ($params) {
 
-    method BUILD ($self, $params) {
-
-    	(Scalar::Util::blessed($!stream) && $!stream->roles::DOES('Directory::Scanner::API::Stream'))
+    	(Scalar::Util::blessed($.stream) && $.stream->roles::DOES('Directory::Scanner::API::Stream'))
     		|| Carp::confess 'You must supply a directory stream';
 
-    	push $!_stack->@* => $!stream;
+    	push $!_stack->@* => $.stream;
     }
 
-    method clone ($self, $dir) {
-    	return $self->new( stream => $!stream->clone( $dir ) );
+    method clone ($dir) {
+    	return $self->new( stream => $.stream->clone( $dir ) );
     }
 
     ## accessor
@@ -38,7 +38,7 @@ class Directory::Scanner::Stream::Recursive does Directory::Scanner::API::Stream
     method is_done   : ro($!_is_done);
     method is_closed : ro($!_is_closed);
 
-    method close ($self) {
+    method close {
     	while ( my $stream = pop $!_stack->@* ) {
     		$stream->close;
     	}
@@ -46,7 +46,7 @@ class Directory::Scanner::Stream::Recursive does Directory::Scanner::API::Stream
     	return;
     }
 
-    method next ($self) {
+    method next {
 
     	return if $!_is_done;
 

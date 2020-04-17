@@ -1,57 +1,57 @@
 use Carp         ();
 use Scalar::Util ();
 
-class Directory::Scanner::Stream::Transformer does Directory::Scanner::API::Stream {
+module Directory::Scanner;
+
+class Stream::Transformer does API::Stream {
 
     # constant
 
-    method DEBUG () { $ENV{DIR_SCANNER_STREAM_TRANSFORMER_DEBUG} // 0 }
+    const DEBUG = $ENV{DIR_SCANNER_STREAM_TRANSFORMER_DEBUG} // 0;
 
     ## slots
 
-	has $!stream;
-	has $!transformer;
+	has $.stream;
+	has $.transformer;
 
     # internal state ...
 	has $!_head;
 
     ## ...
 
-    method BUILDARGS : strict( stream => $!stream, transformer => $!transformer );
+    method BUILD ($params) {
 
-    method BUILD ($self, $params) {
-
-    	(Scalar::Util::blessed($!stream) && $!stream->roles::DOES('Directory::Scanner::API::Stream'))
+    	(Scalar::Util::blessed($.stream) && $.stream->roles::DOES('Directory::Scanner::API::Stream'))
     		|| Carp::confess 'You must supply a directory stream';
 
-    	(defined $!transformer)
+    	(defined $.transformer)
     		|| Carp::confess 'You must supply a `transformer` value';
 
-    	(ref $!transformer eq 'CODE')
+    	(ref $.transformer eq 'CODE')
     		|| Carp::confess 'The `transformer` value supplied must be a CODE reference';
     }
 
-    method clone ($self, $dir) {
+    method clone ($dir) {
     	return $self->new(
-    		stream      => $!stream->clone( $dir ),
-    		transformer => $!transformer
+    		stream      => $.stream->clone( $dir ),
+    		transformer => $.transformer
     	);
     }
 
     ## delegate
 
     method head      : ro($!_head);
-    method is_done   { $!stream->is_done   }
-    method is_closed { $!stream->is_closed }
-    method close     { $!stream->close     }
+    method is_done   { $.stream->is_done   }
+    method is_closed { $.stream->is_closed }
+    method close     { $.stream->close     }
 
-    method next ($self) {
+    method next {
 
     	# skip out early if possible
-    	return if $!stream->is_done;
+    	return if $.stream->is_done;
 
     	$self->_log('... calling next on underlying stream') if DEBUG;
-    	my $next = $!stream->next;
+    	my $next = $.stream->next;
 
     	# this means the stream is likely exhausted
     	unless ( defined $next ) {
@@ -63,7 +63,7 @@ class Directory::Scanner::Stream::Transformer does Directory::Scanner::API::Stre
 
     	# return the result of the Fmap
         local $_ = $next;
-    	return $!_head = $!transformer->( $next );
+    	return $!_head = $.transformer->( $next );
     }
 }
 

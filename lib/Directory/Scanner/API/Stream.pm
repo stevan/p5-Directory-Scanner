@@ -1,4 +1,7 @@
-role Directory::Scanner::API::Stream 0.04 {
+
+module Directory::Scanner;
+
+role API::Stream 0.04 {
 
     method head;
 
@@ -13,7 +16,7 @@ role Directory::Scanner::API::Stream 0.04 {
 
     ## ...
 
-    method flatten ($self) {
+    method flatten {
     	my @results;
     	while ( my $next = $self->next ) {
     		push @results => $next;
@@ -28,36 +31,16 @@ role Directory::Scanner::API::Stream 0.04 {
     # that we need to lazy load things here so as to avoid load
     # ordering issues elsewhere.
 
-    method recurse ($self) {
-        require Directory::Scanner::Stream::Recursive;
-        Directory::Scanner::Stream::Recursive->new( stream => $self );
-    }
-
-    method ignore ($self, $filter) {
-        require Directory::Scanner::Stream::Ignoring;
-        Directory::Scanner::Stream::Ignoring->new( stream => $self, filter => $filter );
-    }
-
-    method match ($self, $predicate) {
-        require Directory::Scanner::Stream::Matching;
-        Directory::Scanner::Stream::Matching->new( stream => $self, predicate => $predicate );
-    }
-
-    method apply ($self, $function) {
-        require Directory::Scanner::Stream::Application;
-        Directory::Scanner::Stream::Application->new( stream => $self, function => $function );
-    }
-
-    method transform ($self, $transformer) {
-        require Directory::Scanner::Stream::Transformer;
-        Directory::Scanner::Stream::Transformer->new( stream => $self, transformer => $transformer );
-    }
+    method recurse                  { Stream::Recursive  ->new( stream => $self                              ) }
+    method ignore    ($filter)      { Stream::Ignoring   ->new( stream => $self, filter => $filter           ) }
+    method match     ($predicate)   { Stream::Matching   ->new( stream => $self, predicate => $predicate     ) }
+    method apply     ($function)    { Stream::Application->new( stream => $self, function => $function       ) }
+    method transform ($transformer) { Stream::Transformer->new( stream => $self, transformer => $transformer ) }
 
     ## ...
 
     # shhh, I shouldn't do this
-    method _log {
-    	my ($self, @msg) = @_;
+    method _log (@msg) {
         warn( @msg, "\n" );
         return;
     }

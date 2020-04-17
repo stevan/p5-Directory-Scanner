@@ -3,15 +3,17 @@ use Carp         ();
 use Scalar::Util ();
 use Path::Tiny   ();
 
-class Directory::Scanner::Stream does Directory::Scanner::API::Stream {
+module Directory::Scanner;
+
+class Stream does API::Stream {
 
     # constant
 
-    method DEBUG () { $ENV{DIR_SCANNER_STREAM_DEBUG} // 0 }
+    const DEBUG = $ENV{DIR_SCANNER_STREAM_DEBUG} // 0;
 
     ## slots
 
-    has $!origin : ro;
+    has $.origin : ro;
 
     # internal state ...
     has $!_head;
@@ -21,14 +23,12 @@ class Directory::Scanner::Stream does Directory::Scanner::API::Stream {
 
     ## ... methods
 
-    method BUILDARGS : strict( origin => $!origin );
-
-    method BUILD ($self, $params) {
-    	my $dir = $!origin;
+    method BUILD ($params) {
+    	my $dir = $.origin;
 
     	# upgrade this to a Path:Tiny
     	# object if needed
-    	$!origin = $dir = Path::Tiny::path( $dir )
+    	$.origin = $dir = Path::Tiny::path( $dir )
     		unless Scalar::Util::blessed( $dir )
     			&& $dir->isa('Path::Tiny');
 
@@ -52,7 +52,7 @@ class Directory::Scanner::Stream does Directory::Scanner::API::Stream {
     method is_done   : ro($!_is_done);
     method is_closed : ro($!_is_closed);
 
-    method close ($self) {
+    method close {
     	closedir( $!_handle )
     		|| Carp::confess 'Unable to close handle for directory because: ' . $!;
     	$!_is_closed = 1;
@@ -60,7 +60,6 @@ class Directory::Scanner::Stream does Directory::Scanner::API::Stream {
     }
 
     method next {
-    	my $self = $_[0];
 
     	return if $!_is_done;
 
@@ -81,7 +80,7 @@ class Directory::Scanner::Stream does Directory::Scanner::API::Stream {
     			$self->_log('Got ('.$name.') from directory read ...') if DEBUG;
     			next if $name eq '.' || $name eq '..'; # skip these ...
 
-    			$next = $!origin->child( $name );
+    			$next = $.origin->child( $name );
 
     			# directory is not readable or has been removed, so skip it
     			if ( ! -r $next ) {
@@ -109,9 +108,8 @@ class Directory::Scanner::Stream does Directory::Scanner::API::Stream {
     }
 
 
-    method clone {
-        my ($self, $dir) = @_;
-        $dir ||= $!origin;
+    method clone ($dir) {
+        $dir ||= $.origin;
         return $self->new( origin => $dir );
     }
 

@@ -1,15 +1,17 @@
 use Carp         ();
 use Scalar::Util ();
 
-class Directory::Scanner::Stream::Concat does Directory::Scanner::API::Stream {
+module Directory::Scanner;
+
+class Stream::Concat does API::Stream {
 
     # constant
 
-    method DEBUG () { $ENV{DIR_SCANNER_STREAM_CONCAT_DEBUG} // 0 }
+    const DEBUG = $ENV{DIR_SCANNER_STREAM_CONCAT_DEBUG} // 0;
 
     ## slots
 
-	has $!streams    = [];
+	has $.streams    = [];
 	# internal state ...
 	has $!_index     = 0;
 	has $!_is_done   = 0;
@@ -17,13 +19,11 @@ class Directory::Scanner::Stream::Concat does Directory::Scanner::API::Stream {
 
     ## ...
 
-    method BUILDARGS : strict( streams => $!streams );
-
-    method BUILD ($self, $params) {
+    method BUILD ($params) {
 
     	(Scalar::Util::blessed($_) && $_->roles::DOES('Directory::Scanner::API::Stream'))
     		|| Carp::confess 'You must supply all directory stream objects'
-    			foreach $!streams->@*;
+    			foreach $.streams->@*;
     }
 
     method clone {
@@ -33,23 +33,23 @@ class Directory::Scanner::Stream::Concat does Directory::Scanner::API::Stream {
 
     ## delegate
 
-    method head ($self) {
-    	return if $!_index > (scalar $!streams->@* - 1);
-    	return $!streams->[ $!_index ]->head;
+    method head {
+    	return if $!_index > (scalar $.streams->@* - 1);
+    	return $.streams->[ $!_index ]->head;
     }
 
     method is_done   : ro($!_is_done);
     method is_closed : ro($!_is_closed);
 
-    method close ($self) {
-    	foreach my $stream ( $!streams->@* ) {
+    method close {
+    	foreach my $stream ( $.streams->@* ) {
     		$stream->close;
     	}
     	$!_is_closed = 1;
     	return
     }
 
-    method next ($self) {
+    method next {
 
     	return if $!_is_done;
 
@@ -61,13 +61,13 @@ class Directory::Scanner::Stream::Concat does Directory::Scanner::API::Stream {
     		undef $next; # clear any previous values, just cause ...
     		$self->_log('Entering loop ... ') if DEBUG;
 
-    		if ( $!_index > (scalar $!streams->@* - 1) ) {
+    		if ( $!_index > (scalar $.streams->@* - 1) ) {
     			# end of the streams now ...
     			$!_is_done = 1;
     			last;
     		}
 
-    		my $current = $!streams->[ $!_index ];
+    		my $current = $.streams->[ $!_index ];
 
     		if ( $current->is_done ) {
     			# if we are done, advance the

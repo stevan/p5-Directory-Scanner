@@ -12,6 +12,12 @@ use Directory::Scanner::API::Stream;
 use Directory::Scanner::Stream;
 use Directory::Scanner::Stream::Concat;
 
+use Directory::Scanner::Stream::Recursive;
+use Directory::Scanner::Stream::Ignoring;
+use Directory::Scanner::Stream::Matching;
+use Directory::Scanner::Stream::Application;
+use Directory::Scanner::Stream::Transformer;
+
 our $VERSION   = '0.04';
 our $AUTHORITY = 'cpan:STEVAN';
 
@@ -32,6 +38,37 @@ sub concat {
 }
 
 1;
+
+=pod
+
+use Carp ();
+
+module Directory::Scanner v0.04 {
+    # ABSTRACT: Streaming directory scanner
+
+    use Stream;
+    use Stream::Concat;
+
+    use Stream::Recursive;
+    use Stream::Ignoring;
+    use Stream::Matching;
+    use Stream::Application;
+    use Stream::Transformer;
+
+    sub for ($dir) {
+        return Stream->new( origin =>  $dir );
+    }
+
+    sub concat (@streams) {
+        Carp::confess 'You must provide at least two streams to concat'
+            if scalar @streams < 2;
+
+        return Stream::Concat->new( streams => [ @streams ] );
+    }
+
+}
+
+=cut
 
 __END__
 

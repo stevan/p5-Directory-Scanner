@@ -1,56 +1,55 @@
 use Carp         ();
 use Scalar::Util ();
 
-class Directory::Scanner::Stream::Matching does Directory::Scanner::API::Stream {
+module Directory::Scanner;
+
+class Stream::Matching does API::Stream {
 
     # constant
 
-    method DEBUG () { $ENV{DIR_SCANNER_STREAM_MATCHING_DEBUG} // 0 }
+    const DEBUG = $ENV{DIR_SCANNER_STREAM_MATCHING_DEBUG} // 0;
 
     ## slots
 
-	has $!stream;
-	has $!predicate;
+	has $.stream;
+	has $.predicate;
 
     ## ...
 
-    method BUILDARGS : strict( stream => $!stream, predicate => $!predicate );
+    method BUILD ($params) {
 
-    method BUILD ($self, $params) {
-
-    	(Scalar::Util::blessed($!stream) && $!stream->roles::DOES('Directory::Scanner::API::Stream'))
+    	(Scalar::Util::blessed($.stream) && $.stream->roles::DOES('Directory::Scanner::API::Stream'))
     		|| Carp::confess 'You must supply a directory stream';
 
-    	(defined $!predicate)
+    	(defined $.predicate)
     		|| Carp::confess 'You must supply a predicate';
 
-    	(ref $!predicate eq 'CODE')
+    	(ref $.predicate eq 'CODE')
     		|| Carp::confess 'The predicate supplied must be a CODE reference';
     }
 
-    method clone ($self, $dir) {
+    method clone ($dir) {
     	return $self->new(
-    		stream    => $!stream->clone( $dir ),
-    		predicate => $!predicate
+    		stream    => $.stream->clone( $dir ),
+    		predicate => $.predicate
     	);
     }
 
     ## delegate
 
-    method head      { $!stream->head      }
-    method is_done   { $!stream->is_done   }
-    method is_closed { $!stream->is_closed }
-    method close     { $!stream->close     }
+    method head      { $.stream->head      }
+    method is_done   { $.stream->is_done   }
+    method is_closed { $.stream->is_closed }
+    method close     { $.stream->close     }
 
     method next {
-    	my $self = $_[0];
 
     	my $next;
     	while (1) {
     		undef $next; # clear any previous values, just cause ...
     		$self->_log('Entering loop ... ') if DEBUG;
 
-    		$next = $!stream->next;
+    		$next = $.stream->next;
 
     		# this means the stream is likely
     		# exhausted, so jump out of the loop
@@ -60,7 +59,7 @@ class Directory::Scanner::Stream::Matching does Directory::Scanner::API::Stream 
     		# and redo the loop if it does
     		# not pass
             local $_ = $next;
-    		next unless $!predicate->( $next );
+    		next unless $.predicate->( $next );
 
     		$self->_log('Exiting loop ... ') if DEBUG;
 

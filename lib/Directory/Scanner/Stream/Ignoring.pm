@@ -1,55 +1,55 @@
 use Carp         ();
 use Scalar::Util ();
 
-class Directory::Scanner::Stream::Ignoring does Directory::Scanner::API::Stream {
+module Directory::Scanner;
+
+class Stream::Ignoring does API::Stream {
 
     # constant
 
-    method DEBUG () { $ENV{DIR_SCANNER_STREAM_IGNORING_DEBUG} // 0 }
+    const DEBUG = $ENV{DIR_SCANNER_STREAM_IGNORING_DEBUG} // 0;
 
     ## slots
 
-    has $!stream;
-    has $!filter;
+    has $.stream;
+    has $.filter;
 
     ## ...
 
-    method BUILDARGS : strict( stream => $!stream, filter => $!filter );
+    method BUILD ($params) {
 
-    method BUILD ($self, $params) {
-
-        (Scalar::Util::blessed($!stream) && $!stream->roles::DOES('Directory::Scanner::API::Stream'))
+        (Scalar::Util::blessed($.stream) && $.stream->roles::DOES('Directory::Scanner::API::Stream'))
             || Carp::confess 'You must supply a directory stream';
 
-        (defined $!filter)
+        (defined $.filter)
             || Carp::confess 'You must supply a filter';
 
-        (ref $!filter eq 'CODE')
+        (ref $.filter eq 'CODE')
             || Carp::confess 'The filter supplied must be a CODE reference';
     }
 
-    method clone ($self, $dir) {
+    method clone ($dir) {
         return $self->new(
-            stream => $!stream->clone( $dir ),
-            filter => $!filter
+            stream => $.stream->clone( $dir ),
+            filter => $.filter
         );
     }
 
     ## delegate
 
-    method head      { $!stream->head      }
-    method is_done   { $!stream->is_done   }
-    method is_closed { $!stream->is_closed }
-    method close     { $!stream->close     }
+    method head      { $.stream->head      }
+    method is_done   { $.stream->is_done   }
+    method is_closed { $.stream->is_closed }
+    method close     { $.stream->close     }
 
-    method next ($self) {
+    method next {
 
         my $next;
         while (1) {
             undef $next; # clear any previous values, just cause ...
             $self->_log('Entering loop ... ') if DEBUG;
 
-            $next = $!stream->next;
+            $next = $.stream->next;
 
             # this means the stream is likely
             # exhausted, so jump out of the loop
@@ -59,7 +59,7 @@ class Directory::Scanner::Stream::Ignoring does Directory::Scanner::API::Stream 
             # and redo the loop if it does
             # not pass
             local $_ = $next;
-            next if $!filter->( $next );
+            next if $.filter->( $next );
 
             $self->_log('Exiting loop ... ') if DEBUG;
 
