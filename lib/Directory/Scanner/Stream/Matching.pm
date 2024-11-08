@@ -1,90 +1,71 @@
-package Directory::Scanner::Stream::Matching;
-# ABSTRACT: Filtered streaming directory iterator
 
-use strict;
-use warnings;
+use v5.40;
+use experimental qw[ class ];
 
 use Carp         ();
 use Scalar::Util ();
 
-our $VERSION   = '0.04';
-our $AUTHORITY = 'cpan:STEVAN';
+class Directory::Scanner::Stream::Matching :isa(Directory::Scanner::API::Stream) {
+    use constant DEBUG => $ENV{DIR_SCANNER_STREAM_MATCHING_DEBUG} // 0;
 
-use constant DEBUG => $ENV{DIR_SCANNER_STREAM_MATCHING_DEBUG} // 0;
+    field $stream    :param :reader;
+    field $predicate :param :reader;
 
-## ...
+    ADJUST {
+    	(blessed $stream && $stream isa Directory::Scanner::API::Stream)
+    		|| Carp::confess 'You must supply a directory stream';
 
-use parent 'UNIVERSAL::Object';
-use roles 'Directory::Scanner::API::Stream';
-use slots (
-	stream    => sub {},
-	predicate => sub {},
-);
+    	(defined $predicate)
+    		|| Carp::confess 'You must supply a predicate';
 
-## ...
+    	(ref $predicate eq 'CODE')
+    		|| Carp::confess 'The predicate supplied must be a CODE reference';
+    }
 
-sub BUILD {
-	my $self      = $_[0];
-	my $stream    = $self->{stream};
-	my $predicate = $self->{predicate};
+    method clone ($dir) {
+    	__CLASS__->new(
+    		stream    => $stream->clone( $dir ),
+    		predicate => $predicate
+    	)
+    }
 
-	(Scalar::Util::blessed($stream) && $stream->roles::DOES('Directory::Scanner::API::Stream'))
-		|| Carp::confess 'You must supply a directory stream';
+    ## delegate
 
-	(defined $predicate)
-		|| Carp::confess 'You must supply a predicate';
+    method head      { $stream->head      }
+    method is_done   { $stream->is_done   }
+    method is_closed { $stream->is_closed }
+    method close     { $stream->close     }
 
-	(ref $predicate eq 'CODE')
-		|| Carp::confess 'The predicate supplied must be a CODE reference';
+    method next {
+
+    	my $next;
+    	while (1) {
+    		undef $next; # clear any previous values, just cause ...
+    		$self->_log('Entering loop ... ') if DEBUG;
+
+    		$next = $stream->next;
+
+    		# this means the stream is likely
+    		# exhausted, so jump out of the loop
+    		last unless defined $next;
+
+    		# now try to predicate the value
+    		# and redo the loop if it does
+    		# not pass
+            local $_ = $next;
+    		next unless $predicate->( $next );
+
+    		$self->_log('Exiting loop ... ') if DEBUG;
+
+    		# if we have gotten to this
+    		# point, we have a value and
+    		# want to return it
+    		last;
+    	}
+
+    	return $next;
+    }
 }
-
-sub clone {
-	my ($self, $dir) = @_;
-	return $self->new(
-		stream    => $self->{stream}->clone( $dir ),
-		predicate => $self->{predicate}
-	);
-}
-
-## delegate
-
-sub head      { $_[0]->{stream}->head      }
-sub is_done   { $_[0]->{stream}->is_done   }
-sub is_closed { $_[0]->{stream}->is_closed }
-sub close     { $_[0]->{stream}->close     }
-
-sub next {
-	my $self = $_[0];
-
-	my $next;
-	while (1) {
-		undef $next; # clear any previous values, just cause ...
-		$self->_log('Entering loop ... ') if DEBUG;
-
-		$next = $self->{stream}->next;
-
-		# this means the stream is likely
-		# exhausted, so jump out of the loop
-		last unless defined $next;
-
-		# now try to predicate the value
-		# and redo the loop if it does
-		# not pass
-        local $_ = $next;
-		next unless $self->{predicate}->( $next );
-
-		$self->_log('Exiting loop ... ') if DEBUG;
-
-		# if we have gotten to this
-		# point, we have a value and
-		# want to return it
-		last;
-	}
-
-	return $next;
-}
-
-1;
 
 __END__
 

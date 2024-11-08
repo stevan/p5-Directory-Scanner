@@ -1,74 +1,55 @@
-package Directory::Scanner::Stream::Application;
-# ABSTRACT: Apply function to streaming directory iterator
 
-use strict;
-use warnings;
+use v5.40;
+use experimental qw[ class ];
 
 use Carp         ();
 use Scalar::Util ();
 
-our $VERSION   = '0.04';
-our $AUTHORITY = 'cpan:STEVAN';
+class Directory::Scanner::Stream::Application :isa(Directory::Scanner::API::Stream) {
+    use constant DEBUG => $ENV{DIR_SCANNER_STREAM_APPLICATION_DEBUG} // 0;
 
-use constant DEBUG => $ENV{DIR_SCANNER_STREAM_APPLICATION_DEBUG} // 0;
+    field $stream   :param :reader;
+    field $function :param :reader;
 
-## ...
+    ADJUST {
+    	(blessed $stream && $stream isa Directory::Scanner::API::Stream)
+    		|| Carp::confess 'You must supply a directory stream';
 
-use parent 'UNIVERSAL::Object';
-use roles 'Directory::Scanner::API::Stream';
-use slots (
-	stream   => sub {},
-	function => sub {},
-);
+    	(defined $function)
+    		|| Carp::confess 'You must supply a `function` value';
 
-## ...
+    	(ref $function eq 'CODE')
+    		|| Carp::confess 'The `function` value supplied must be a CODE reference';
+    }
 
-sub BUILD {
-	my $self   = $_[0];
-	my $stream = $self->{stream};
-	my $f      = $self->{function};
+    method clone ($dir) {
+    	__CLASS__->new(
+    		stream   => $stream->clone( $dir ),
+    		function => $function
+    	)
+    }
 
-	(Scalar::Util::blessed($stream) && $stream->roles::DOES('Directory::Scanner::API::Stream'))
-		|| Carp::confess 'You must supply a directory stream';
+    ## delegate
 
-	(defined $f)
-		|| Carp::confess 'You must supply a `function` value';
+    method head      { $stream->head      }
+    method is_done   { $stream->is_done   }
+    method is_closed { $stream->is_closed }
+    method close     { $stream->close     }
 
-	(ref $f eq 'CODE')
-		|| Carp::confess 'The `function` value supplied must be a CODE reference';
+    method next {
+    	my $next = $stream->next;
+
+    	# this means the stream is likely exhausted
+    	return unless defined $next;
+
+    	# apply the function ...
+        local $_ = $next;
+    	$function->( $next );
+
+    	# return the next value
+    	return $next;
+    }
 }
-
-sub clone {
-	my ($self, $dir) = @_;
-	return $self->new(
-		stream   => $self->{stream}->clone( $dir ),
-		function => $self->{function}
-	);
-}
-
-## delegate
-
-sub head      { $_[0]->{stream}->head      }
-sub is_done   { $_[0]->{stream}->is_done   }
-sub is_closed { $_[0]->{stream}->is_closed }
-sub close     { $_[0]->{stream}->close     }
-
-sub next {
-	my $self = $_[0];
-	my $next = $self->{stream}->next;
-
-	# this means the stream is likely exhausted
-	return unless defined $next;
-
-	# apply the function ...
-    local $_ = $next;
-	$self->{function}->( $next );
-
-	# return the next value
-	return $next;
-}
-
-1;
 
 __END__
 

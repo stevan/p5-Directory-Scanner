@@ -1,90 +1,71 @@
-package Directory::Scanner::Stream::Ignoring;
-# ABSTRACT: Ignoring files in the streaming directory iterator
 
-use strict;
-use warnings;
+use v5.40;
+use experimental qw[ class ];
 
 use Carp         ();
 use Scalar::Util ();
 
-our $VERSION   = '0.04';
-our $AUTHORITY = 'cpan:STEVAN';
+class Directory::Scanner::Stream::Ignoring :isa(Directory::Scanner::API::Stream) {
+    use constant DEBUG => $ENV{DIR_SCANNER_STREAM_IGNORING_DEBUG} // 0;
 
-use constant DEBUG => $ENV{DIR_SCANNER_STREAM_IGNORING_DEBUG} // 0;
+    field $stream :param :reader;
+    field $filter :param :reader;
 
-## ...
+    ADJUST {
+        (blessed $stream && $stream isa Directory::Scanner::API::Stream)
+            || Carp::confess 'You must supply a directory stream';
 
-use parent 'UNIVERSAL::Object';
-use roles 'Directory::Scanner::API::Stream';
-use slots (
-    stream => sub {},
-    filter => sub {},
-);
+        (defined $filter)
+            || Carp::confess 'You must supply a filter';
 
-## ...
-
-sub BUILD {
-    my $self   = $_[0];
-    my $stream = $self->{stream};
-    my $filter = $self->{filter};
-
-    (Scalar::Util::blessed($stream) && $stream->roles::DOES('Directory::Scanner::API::Stream'))
-        || Carp::confess 'You must supply a directory stream';
-
-    (defined $filter)
-        || Carp::confess 'You must supply a filter';
-
-    (ref $filter eq 'CODE')
-        || Carp::confess 'The filter supplied must be a CODE reference';
-}
-
-sub clone {
-    my ($self, $dir) = @_;
-    return $self->new(
-        stream => $self->{stream}->clone( $dir ),
-        filter => $self->{filter}
-    );
-}
-
-## delegate
-
-sub head      { $_[0]->{stream}->head      }
-sub is_done   { $_[0]->{stream}->is_done   }
-sub is_closed { $_[0]->{stream}->is_closed }
-sub close     { $_[0]->{stream}->close     }
-
-sub next {
-    my $self = $_[0];
-
-    my $next;
-    while (1) {
-        undef $next; # clear any previous values, just cause ...
-        $self->_log('Entering loop ... ') if DEBUG;
-
-        $next = $self->{stream}->next;
-
-        # this means the stream is likely
-        # exhausted, so jump out of the loop
-        last unless defined $next;
-
-        # now try to filter the value
-        # and redo the loop if it does
-        # not pass
-        local $_ = $next;
-        next if $self->{filter}->( $next );
-
-        $self->_log('Exiting loop ... ') if DEBUG;
-
-        # if we have gotten to this
-        # point, we have a value and
-        # want to return it
-        last;
+        (ref $filter eq 'CODE')
+            || Carp::confess 'The filter supplied must be a CODE reference';
     }
 
-    return $next;
-}
+    method clone ($dir) {
+        __CLASS__->new(
+            stream => $stream->clone( $dir ),
+            filter => $filter
+        );
+    }
 
-1;
+    ## delegate
+
+    method head      { $stream->head      }
+    method is_done   { $stream->is_done   }
+    method is_closed { $stream->is_closed }
+    method close     { $stream->close     }
+
+    method next {
+        my $next;
+        while (1) {
+            undef $next; # clear any previous values, just cause ...
+            $self->_log('Entering loop ... ') if DEBUG;
+
+            $next = $stream->next;
+
+            # this means the stream is likely
+            # exhausted, so jump out of the loop
+            last unless defined $next;
+
+            # now try to filter the value
+            # and redo the loop if it does
+            # not pass
+            local $_ = $next;
+            next if $filter->( $next );
+
+            $self->_log('Exiting loop ... ') if DEBUG;
+
+            # if we have gotten to this
+            # point, we have a value and
+            # want to return it
+            last;
+        }
+
+        return $next;
+    }
+
+}
 
 __END__
 

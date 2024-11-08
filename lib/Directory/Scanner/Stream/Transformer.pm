@@ -1,83 +1,62 @@
-package Directory::Scanner::Stream::Transformer;
-# ABSTRACT: Fmap a streaming directory iterator
 
-use strict;
-use warnings;
+use v5.40;
+use experimental qw[ class ];
 
 use Carp         ();
 use Scalar::Util ();
 
-our $VERSION   = '0.04';
-our $AUTHORITY = 'cpan:STEVAN';
+class Directory::Scanner::Stream::Transformer :isa(Directory::Scanner::API::Stream) {
+    use constant DEBUG => $ENV{DIR_SCANNER_STREAM_TRANSFORMER_DEBUG} // 0;
 
-use constant DEBUG => $ENV{DIR_SCANNER_STREAM_TRANSFORMER_DEBUG} // 0;
+    field $stream      :param :reader;
+    field $transformer :param :reader;
 
-## ...
+    field $head :reader;
 
-use parent 'UNIVERSAL::Object';
-use roles 'Directory::Scanner::API::Stream';
-use slots (
-	stream      => sub {},
-	transformer => sub {},
-	# internal state ...
-	_head      => sub {},
-);
+    ADJUST {
+    	(blessed $stream && $stream isa Directory::Scanner::API::Stream)
+    		|| Carp::confess 'You must supply a directory stream';
 
-## ...
+    	(defined $transformer)
+    		|| Carp::confess 'You must supply a `transformer` value';
 
-sub BUILD {
-	my $self   = $_[0];
-	my $stream = $self->{stream};
-	my $f      = $self->{transformer};
+    	(ref $transformer eq 'CODE')
+    		|| Carp::confess 'The `transformer` value supplied must be a CODE reference';
+    }
 
-	(Scalar::Util::blessed($stream) && $stream->roles::DOES('Directory::Scanner::API::Stream'))
-		|| Carp::confess 'You must supply a directory stream';
+    method clone ($dir) {
+    	__CLASS__->new(
+    		stream      => $stream->clone( $dir ),
+    		transformer => $transformer
+    	)
+    }
 
-	(defined $f)
-		|| Carp::confess 'You must supply a `transformer` value';
+    ## delegate
 
-	(ref $f eq 'CODE')
-		|| Carp::confess 'The `transformer` value supplied must be a CODE reference';
+    method is_done   { $stream->is_done   }
+    method is_closed { $stream->is_closed }
+    method close     { $stream->close     }
+
+    method next {
+    	# skip out early if possible
+    	return if $stream->is_done;
+
+    	$self->_log('... calling next on underlying stream') if DEBUG;
+    	my $next = $stream->next;
+
+    	# this means the stream is likely exhausted
+    	unless ( defined $next ) {
+    		$head = undef;
+    		return;
+    	}
+
+    	$self->_log('got value from stream'.$next.', transforming it now') if DEBUG;
+
+    	# return the result of the Fmap
+        local $_ = $next;
+    	return $head = $transformer->( $next );
+    }
 }
-
-sub clone {
-	my ($self, $dir) = @_;
-	return $self->new(
-		stream      => $self->{stream}->clone( $dir ),
-		transformer => $self->{transformer}
-	);
-}
-
-## delegate
-
-sub head      { $_[0]->{_head}             }
-sub is_done   { $_[0]->{stream}->is_done   }
-sub is_closed { $_[0]->{stream}->is_closed }
-sub close     { $_[0]->{stream}->close     }
-
-sub next {
-	my $self = $_[0];
-
-	# skip out early if possible
-	return if $self->{stream}->is_done;
-
-	$self->_log('... calling next on underlying stream') if DEBUG;
-	my $next = $self->{stream}->next;
-
-	# this means the stream is likely exhausted
-	unless ( defined $next ) {
-		$self->{_head} = undef;
-		return;
-	}
-
-	$self->_log('got value from stream'.$next.', transforming it now') if DEBUG;
-
-	# return the result of the Fmap
-    local $_ = $next;
-	return $self->{_head} = $self->{transformer}->( $next );
-}
-
-1;
 
 __END__
 

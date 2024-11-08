@@ -1,80 +1,57 @@
-package Directory::Scanner::API::Stream;
-# ABSTRACT: Streaming directory iterator abstract interface
 
-use strict;
-use warnings;
+use v5.40;
+use experimental qw[ class ];
 
-our $VERSION   = '0.04';
-our $AUTHORITY = 'cpan:STEVAN';
+class Directory::Scanner::API::Stream {
 
-sub head;
+    method head;
 
-sub is_done;
-sub is_closed;
+    method is_done;
+    method is_closed;
 
-sub close;
-sub next;
+    method close;
+    method next;
 
-sub clone; # ( $dir => Path::Tiny )
+    method clone; # ( $dir => Path::Tiny )
 
-## ...
+    ## ...
 
-sub flatten {
-	my ($self) = @_;
-	my @results;
-	while ( my $next = $self->next ) {
-		push @results => $next;
-	}
-	return @results;
+    method flatten {
+    	my @results;
+    	while ( my $next = $self->next ) {
+    		push @results => $next;
+    	}
+    	return @results;
+    }
+
+    method recurse {
+        Directory::Scanner::Stream::Recursive->new( stream => $self );
+    }
+
+    method ignore ($filter) {
+        Directory::Scanner::Stream::Ignoring->new( stream => $self, filter => $filter );
+    }
+
+    method match ($predicate) {
+        Directory::Scanner::Stream::Matching->new( stream => $self, predicate => $predicate );
+    }
+
+    method apply ($function) {
+        Directory::Scanner::Stream::Application->new( stream => $self, function => $function );
+    }
+
+    method transform ($transformer) {
+        Directory::Scanner::Stream::Transformer->new( stream => $self, transformer => $transformer );
+    }
+
+    ## ...
+
+    # shhh, I shouldn't do this
+    method _log (@msg) {
+        warn( @msg, "\n" );
+        return;
+    }
 }
-
-# IMPORTANT NOTE:
-# We have a bit of a recursive dependency issue here, which
-# is that these methods are being defined here as calls to
-# other classes, all of which also `do` this role. This means
-# that we need to lazy load things here so as to avoid load
-# ordering issues elsewhere.
-
-sub recurse {
-    my ($self) = @_;
-    require Directory::Scanner::Stream::Recursive;
-    Directory::Scanner::Stream::Recursive->new( stream => $self );
-}
-
-sub ignore {
-    my ($self, $filter) = @_;
-    require Directory::Scanner::Stream::Ignoring;
-    Directory::Scanner::Stream::Ignoring->new( stream => $self, filter => $filter );
-}
-
-sub match {
-    my ($self, $predicate) = @_;
-    require Directory::Scanner::Stream::Matching;
-    Directory::Scanner::Stream::Matching->new( stream => $self, predicate => $predicate );
-}
-
-sub apply {
-    my ($self, $function) = @_;
-    require Directory::Scanner::Stream::Application;
-    Directory::Scanner::Stream::Application->new( stream => $self, function => $function );
-}
-
-sub transform {
-    my ($self, $transformer) = @_;
-    require Directory::Scanner::Stream::Transformer;
-    Directory::Scanner::Stream::Transformer->new( stream => $self, transformer => $transformer );
-}
-
-## ...
-
-# shhh, I shouldn't do this
-sub _log {
-	my ($self, @msg) = @_;
-    warn( @msg, "\n" );
-    return;
-}
-
-1;
 
 __END__
 

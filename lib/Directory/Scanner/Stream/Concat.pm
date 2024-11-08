@@ -1,115 +1,93 @@
-package Directory::Scanner::Stream::Concat;
-# ABSTRACT: Connect streaming directory iterators
 
-use strict;
-use warnings;
+use v5.40;
+use experimental qw[ class ];
 
 use Carp         ();
 use Scalar::Util ();
 
-our $VERSION   = '0.04';
-our $AUTHORITY = 'cpan:STEVAN';
+class Directory::Scanner::Stream::Concat :isa(Directory::Scanner::API::Stream) {
+    use constant DEBUG => $ENV{DIR_SCANNER_STREAM_CONCAT_DEBUG} // 0;
 
-use constant DEBUG => $ENV{DIR_SCANNER_STREAM_CONCAT_DEBUG} // 0;
+    field $streams :param :reader;
 
-## ...
+    field $index     :reader = 0;
+    field $is_done   :reader = false;
+    field $is_closed :reader = false;
 
-use parent 'UNIVERSAL::Object';
-use roles 'Directory::Scanner::API::Stream';
-use slots (
-	streams    => sub { [] },
-	# internal state ...
-	_index     => sub { 0 },
-	_is_done   => sub { 0 },
-	_is_closed => sub { 0 },
-);
+    ADJUST {
+    	(blessed $_ && $_ isa Directory::Scanner::API::Stream)
+    		|| Carp::confess 'You must supply all directory stream objects'
+    			foreach @$streams;
+    }
 
-## ...
+    method clone {
+    	# TODO - this might be possible ...
+    	Carp::confess 'Cloning a concat stream is not a good idea, just dont do it';
+    }
 
-sub BUILD {
-	my $self    = $_[0];
-	my $streams = $self->{streams};
+    ## delegate
 
-	(Scalar::Util::blessed($_) && $_->roles::DOES('Directory::Scanner::API::Stream'))
-		|| Carp::confess 'You must supply all directory stream objects'
-			foreach @$streams;
+    method head {
+    	return if $index > $#{$streams};
+    	return $streams->[ $index ]->head;
+    }
+
+    method close {
+    	foreach my $stream ( @$streams ) {
+    		$stream->close;
+    	}
+    	$is_closed = true;
+    	return
+    }
+
+    method next {
+    	return if $is_done;
+
+    	Carp::confess 'Cannot call `next` on a closed stream'
+    		if $is_closed;
+
+    	my $next;
+    	while (1) {
+    		undef $next; # clear any previous values, just cause ...
+    		$self->_log('Entering loop ... ') if DEBUG;
+
+    		if ( $index > $#{$streams} ) {
+    			# end of the streams now ...
+    			$is_done = true;
+    			last;
+    		}
+
+    		my $current = $streams->[ $index ];
+
+    		if ( $current->is_done ) {
+    			# if we are done, advance the
+    			# index and restart the loop
+    			$index++;
+    			next;
+    		}
+    		else {
+    			$next = $current->next;
+
+    			# if next returns nothing,
+    			# then we now done, so
+    			# restart the loop which
+    			# will trigger the ->is_done
+    			# block above and DWIM
+    			next unless defined $next;
+
+    			$self->_log('Exiting loop ... ') if DEBUG;
+
+    			# if we have gotten to this
+    			# point, we have a value and
+    			# want to return it
+    			last;
+    		}
+    	}
+
+    	return $next;
+    }
 }
 
-sub clone {
-	# TODO - this might be possible ...
-	Carp::confess 'Cloning a concat stream is not a good idea, just dont do it';
-}
-
-## delegate
-
-sub head {
-	my $self = $_[0];
-	return if $self->{_index} > $#{$self->{streams}};
-	return $self->{streams}->[ $self->{_index} ]->head;
-}
-
-sub is_done   { $_[0]->{_is_done}   }
-sub is_closed { $_[0]->{_is_closed} }
-
-sub close {
-	my $self = $_[0];
-	foreach my $stream ( @{ $self->{streams} } ) {
-		$stream->close;
-	}
-	$_[0]->{_is_closed} = 1;
-	return
-}
-
-sub next {
-	my $self = $_[0];
-
-	return if $self->{_is_done};
-
-	Carp::confess 'Cannot call `next` on a closed stream'
-		if $self->{_is_closed};
-
-	my $next;
-	while (1) {
-		undef $next; # clear any previous values, just cause ...
-		$self->_log('Entering loop ... ') if DEBUG;
-
-		if ( $self->{_index} > $#{$self->{streams}} ) {
-			# end of the streams now ...
-			$self->{_is_done} = 1;
-			last;
-		}
-
-		my $current = $self->{streams}->[ $self->{_index} ];
-
-		if ( $current->is_done ) {
-			# if we are done, advance the
-			# index and restart the loop
-			$self->{_index}++;
-			next;
-		}
-		else {
-			$next = $current->next;
-
-			# if next returns nothing,
-			# then we now done, so
-			# restart the loop which
-			# will trigger the ->is_done
-			# block above and DWIM
-			next unless defined $next;
-
-			$self->_log('Exiting loop ... ') if DEBUG;
-
-			# if we have gotten to this
-			# point, we have a value and
-			# want to return it
-			last;
-		}
-	}
-
-	return $next;
-}
-
-1;
 
 __END__
 

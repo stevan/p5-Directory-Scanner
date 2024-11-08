@@ -1,8 +1,5 @@
-package Directory::Scanner;
-# ABSTRACT: Streaming directory scanner
 
-use strict;
-use warnings;
+use v5.40;
 
 use Carp         ();
 use Scalar::Util ();
@@ -10,25 +7,24 @@ use Scalar::Util ();
 use Directory::Scanner::API::Stream;
 
 use Directory::Scanner::Stream;
+use Directory::Scanner::Stream::Application;
 use Directory::Scanner::Stream::Concat;
+use Directory::Scanner::Stream::Ignoring;
+use Directory::Scanner::Stream::Matching;
+use Directory::Scanner::Stream::Recursive;
+use Directory::Scanner::Stream::Transformer;
 
-our $VERSION   = '0.04';
-our $AUTHORITY = 'cpan:STEVAN';
+package Directory::Scanner {
 
-## static builder constructors
+    sub for ($, $dir) {
+        Directory::Scanner::Stream->new( origin =>  $dir );
+    }
 
-sub for {
-    my (undef, $dir) = @_;
-    return Directory::Scanner::Stream->new( origin =>  $dir );
-}
-
-sub concat {
-    my (undef, @streams) = @_;
-
-    Carp::confess 'You must provide at least two streams to concat'
-        if scalar @streams < 2;
-
-    return Directory::Scanner::Stream::Concat->new( streams => [ @streams ] );
+    sub concat ($, @streams) {
+        Carp::confess 'You must provide at least two streams to concat'
+            if scalar @streams < 2;
+        Directory::Scanner::Stream::Concat->new( streams => [ @streams ] );
+    }
 }
 
 1;
